@@ -1,0 +1,26 @@
+{
+  "name": "doc-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A local read model and navigator for markdown-driven projects.",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "corepack pnpm build:packages && corepack pnpm --filter @docstudio/web build",
+    "build:packages": "tsc -b && chmod +x packages/cli/dist/index.js",
+    "typecheck": "tsc -b && tsc -p packages/web --noEmit",
+    "test": "vitest run",
+    "dev": "corepack pnpm build:packages && concurrently -k -n types,api,web -c gray,blue,magenta \"tsc -b -w --preserveWatchOutput\" \"node --watch packages/cli/dist/index.js serve fixtures/vault-demo\" \"corepack pnpm --filter @docstudio/web dev\"",
+    "start": "node packages/cli/dist/index.js serve",
+    "docstudio": "node packages/cli/dist/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "concurrently": "^10.0.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

@@ -1,0 +1,12 @@
+.git
+.gitignore
+.docstudio
+**/.docstudio
+node_modules
+**/node_modules
+dist
+**/dist
+packages/web/test
+fixtures
+docs
+*.log

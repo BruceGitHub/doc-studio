@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.docstudio/
+coverage/
+*.log
+.DS_Store
+.vite/

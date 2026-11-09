@@ -1,0 +1,21 @@
+{
+  "name": "@docstudio/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "docstudio": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@docstudio/core": "workspace:*",
+    "@docstudio/server": "workspace:*",
+    "commander": "^15.0.0"
+  }
+}

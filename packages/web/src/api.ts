@@ -1,0 +1,30 @@
+export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`/api${path}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init?.headers ?? {}),
+    },
+  })
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    let message = text
+    try {
+      const parsed = JSON.parse(text) as { error?: string }
+      if (parsed.error) message = parsed.error
+    } catch {
+      // Not JSON: keep the raw body.
+    }
+    throw new Error(message || `${response.status} ${response.statusText}`)
+  }
+
+  return (await response.json()) as T
+}
+
+export function post<T>(path: string, body?: unknown): Promise<T> {
+  return api<T>(path, {
+    method: 'POST',
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  })
+}
