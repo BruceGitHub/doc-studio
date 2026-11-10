@@ -95,7 +95,7 @@ export function Shell() {
           sidebarCollapsed={collapsed}
           onToggleSidebar={() => setCollapsed((value) => !value)}
         />
-        <main className="mx-auto w-full max-w-[1480px] px-5 py-7 lg:px-8">
+        <main className="mx-auto w-full max-w-[1480px] px-4 py-6 lg:pl-5 lg:pr-8">
           <Outlet />
         </main>
       </div>

@@ -172,4 +172,6 @@ export interface OpenResultDTO {
   ok: boolean
   command: string
   message?: string
+  /** Browser-launchable editor URL, e.g. vscode://file/... (host path). */
+  url?: string
 }

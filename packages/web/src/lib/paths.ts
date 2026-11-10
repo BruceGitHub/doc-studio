@@ -71,3 +71,25 @@ export function encodeDocId(id: string): string {
 export function docHref(id: string, anchor?: string | null): string {
   return `/doc/${encodeDocId(id)}${anchor ? `#${encodeURIComponent(anchor)}` : ''}`
 }
+
+export interface PathCrumb {
+  /** File or directory name, including the markdown extension on the leaf. */
+  name: string
+  /** Vault-relative path of this crumb. */
+  path: string
+  directory: boolean
+}
+
+/**
+ * Splits a vault-relative file path into breadcrumb pieces:
+ * `alpha/specs/checkout.md` → `alpha` / `specs` / `checkout.md`.
+ */
+export function pathCrumbs(path: string): PathCrumb[] {
+  const parts = path.split('/').filter(Boolean)
+  return parts.map((name, index) => ({
+    name,
+    path: parts.slice(0, index + 1).join('/'),
+    directory: index < parts.length - 1,
+  }))
+}
+

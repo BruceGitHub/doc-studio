@@ -11,6 +11,12 @@ Status legend: `todo` · `in progress` · `done` · `blocked`
 | 5 | Collapsible left sidebar to reclaim horizontal space | done |
 | 6 | Document right column order: On this page first, then references/graph | done |
 | 7 | Unit tests for the new server and web behaviour | done |
+| 8 | Page title: browser tab shows the document (and view) name | done |
+| 9 | File path breadcrumbs on the document page | done |
+| 10 | Reduce left margins to give content more room | done |
+| 11 | "On this page" stays visible while scrolling | done |
+| 12 | Make "Open in editor" work (including the Docker setup) | done |
+| 13 | Issue lists inside accordions, closed by default | done |
 
 ## Notes
 
@@ -84,3 +90,49 @@ Outcome:
 - `packages/web/test/nav-tree.test.ts`: ancestor expansion helper.
 - `packages/web/test/issues.test.tsx`: full error content and empty state.
 - Suite: 28 tests passing.
+
+## Task 8 — Page title
+
+- Added `packages/web/src/lib/usePageTitle.ts`.
+- Document pages set the tab title to the document title (`Checkout v2 · Doc
+  Studio`); project, search, doctor and overview views also get meaningful
+  titles.
+
+## Task 9 — File path breadcrumbs
+
+- Added `pathCrumbs()` in `packages/web/src/lib/paths.ts`.
+- The document header shows `vault / folder / subfolder / file.md`, linking the
+  top-level project folder to its project page.
+- Removed a stray `.md` suffix that rendered `file.md.md`.
+
+## Task 10 — Left margins
+
+- Main content and top bar use a smaller left padding (`pl-4`, `lg:pl-5`) while
+  keeping the right padding, reclaiming horizontal space for the content.
+
+## Task 11 — Sticky "On this page"
+
+- The document right column is sticky below the top bar on `xl` screens and
+  scrolls internally when taller than the viewport, so "On this page" stays
+  visible while the article scrolls.
+
+## Task 12 — Open in editor
+
+- The server now returns an optional `url` on `POST /api/open`.
+- Known editors map to their browser protocol (`vscode://`, `vscode-insiders://`,
+  `vscodium://`, `cursor://`); `DOCSTUDIO_EDITOR_URL` can override the template.
+- `DOCSTUDIO_HOST_VAULT` maps the vault mount to the host path, so the container
+  build can hand a `vscode://file/...` URL to the browser even though it cannot
+  spawn the host editor. `make start` sets it automatically (with `wslpath` on
+  WSL).
+- The UI opens the URL when spawning fails and keeps a manual link as fallback.
+- The editor command parser now respects quoted paths with spaces.
+
+## Task 13 — Issue accordions
+
+- Added `packages/web/src/components/Disclosure.tsx` (native `<details>`,
+  closed by default).
+- Overview "Doctor issues", document-level doctor issues and each doctor group
+  are collapsed by default; the summary keeps counts and severity visible.
+
+Test suite: 9 files, 38 tests.

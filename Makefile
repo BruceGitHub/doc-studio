@@ -5,7 +5,12 @@ VAULT   ?= $(CURDIR)/fixtures/vault-demo
 PORT    ?= 4321
 COMPOSE ?= docker compose
 
-COMPOSE_ENV = DOCSTUDIO_VAULT="$(VAULT)" DOCSTUDIO_PORT="$(PORT)"
+# The container cannot spawn a host editor, so it needs the vault path as the
+# browser machine sees it to build vscode:// links. On WSL that is a Windows
+# path; elsewhere it is the same absolute path.
+HOST_VAULT ?= $(shell if command -v wslpath >/dev/null 2>&1; then wslpath -w "$(VAULT)"; else printf '%s' "$(VAULT)"; fi)
+
+COMPOSE_ENV = DOCSTUDIO_VAULT="$(VAULT)" DOCSTUDIO_HOST_VAULT="$(HOST_VAULT)" DOCSTUDIO_PORT="$(PORT)"
 
 .DEFAULT_GOAL := help
 

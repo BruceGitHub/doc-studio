@@ -23,7 +23,7 @@ import {
   type RefreshResult,
   type SearchHitDTO,
 } from '@docstudio/core'
-import { openInEditor } from './editor.js'
+import { openInEditor, editorUrl } from './editor.js'
 import { toEdge, toIssue, toSummary } from './mappers.js'
 import { buildNavTree } from './nav.js'
 import { loadState, saveState, type StudioState } from './state.js'
@@ -48,6 +48,12 @@ export async function createServer(options: CreateServerOptions): Promise<Server
   const vault = Vault.open(options.root)
   const state = loadState(vault.root)
   const editor = options.editor ?? 'code'
+  // Inside a container the editor lives on the host: a browser URL scheme is
+  // the only way to reach it. `DOCSTUDIO_HOST_VAULT` maps the vault mount to
+  // the host path; locally the served root already is the host path.
+  const hostRoot =
+    process.env.DOCSTUDIO_HOST_VAULT?.trim() || (isContainer() ? null : vault.root)
+  const editorUrlTemplate = process.env.DOCSTUDIO_EDITOR_URL?.trim() || null
   const app = Fastify({ logger: false, bodyLimit: 1_000_000 })
   const clients = new Set<ServerResponse>()
 
@@ -316,7 +322,15 @@ export async function createServer(options: CreateServerOptions): Promise<Server
     const body = request.body as { id?: string; line?: number } | undefined
     const doc = body?.id ? vault.getDoc(body.id) : null
     if (!doc) return reply.code(400).send({ error: 'Unknown document' })
-    return openInEditor(doc.absPath, editor, body?.line)
+    const result = await openInEditor(doc.absPath, editor, body?.line)
+    const url = editorUrl({
+      editorCommand: editor,
+      hostRoot,
+      relativePath: path.relative(vault.root, doc.absPath),
+      line: body?.line,
+      template: editorUrlTemplate,
+    })
+    return url ? { ...result, url } : result
   })
 
   app.post('/api/refresh', async () => {
@@ -420,6 +434,10 @@ function isDirectory(candidate: string): boolean {
   } catch {
     return false
   }
+}
+
+function isContainer(): boolean {
+  return fs.existsSync('/.dockerenv') || fs.existsSync('/run/.containerenv')
 }
 
 function docProject(docId: string): string {

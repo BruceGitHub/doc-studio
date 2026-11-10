@@ -5,6 +5,7 @@ import { StatusDot, TypeBadge } from '../components/Badge'
 import { EmptyState, ErrorState, Loading, Spinner } from '../components/States'
 import { relativeTime } from '../lib/format'
 import { useApi } from '../lib/useApi'
+import { usePageTitle } from '../lib/usePageTitle'
 import { useDebounced } from '../lib/useDebounced'
 import { docHref } from '../lib/paths'
 
@@ -18,6 +19,8 @@ export function SearchPage() {
   const trimmed = debounced.trim()
   const meta = useApi<MetaDTO>('/meta')
   const projects = useApi<ProjectSummaryDTO[]>('/projects')
+
+  usePageTitle('Search')
 
   const search = useMemo(() => {
     if (!trimmed) return null

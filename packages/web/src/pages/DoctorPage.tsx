@@ -2,9 +2,11 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { DoctorDTO } from '@docstudio/core'
 import { post } from '../api'
+import { Disclosure } from '../components/Disclosure'
 import { EmptyState, ErrorState, Loading } from '../components/States'
 import { ISSUE_HELP, ISSUE_LABEL, relativeTime } from '../lib/format'
 import { useApi } from '../lib/useApi'
+import { usePageTitle } from '../lib/usePageTitle'
 import { docHref } from '../lib/paths'
 
 type Filter = 'all' | 'error' | 'warning'
@@ -13,6 +15,8 @@ export function DoctorPage() {
   const doctor = useApi<DoctorDTO>('/doctor')
   const [filter, setFilter] = useState<Filter>('all')
   const [refreshing, setRefreshing] = useState(false)
+
+  usePageTitle('Vault health')
 
   const groups = useMemo(() => {
     const list = doctor.data?.groups ?? []
@@ -92,35 +96,36 @@ export function DoctorPage() {
 
           <div className="space-y-4">
             {groups.map((group) => (
-              <section key={group.kind} className="panel p-0">
-                <div className="panel-header items-start">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          group.severity === 'error' ? 'bg-red' : 'bg-amber'
-                        }`}
-                      />
-                      <h2 className="text-[15px] font-semibold tracking-tight text-ink">
-                        {ISSUE_LABEL[group.kind] ?? group.kind}
-                      </h2>
-                      <span className="font-mono text-[10px] text-faint">
-                        {group.issues.length}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-faint">{ISSUE_HELP[group.kind]}</p>
-                  </div>
-                  <span
-                    className={`chip ${
-                      group.severity === 'error'
-                        ? 'border-red/25 bg-red/10 text-red'
-                        : 'border-amber/25 bg-amber/10 text-amber'
-                    }`}
-                  >
-                    {group.severity}
+              <Disclosure
+                key={group.kind}
+                title={
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        group.severity === 'error' ? 'bg-red' : 'bg-amber'
+                      }`}
+                    />
+                    {ISSUE_LABEL[group.kind] ?? group.kind}
                   </span>
-                </div>
-
+                }
+                subtitle={ISSUE_HELP[group.kind]}
+                meta={
+                  <>
+                    <span className="font-mono text-[10px] text-faint">
+                      {group.issues.length}
+                    </span>
+                    <span
+                      className={`chip ${
+                        group.severity === 'error'
+                          ? 'border-red/25 bg-red/10 text-red'
+                          : 'border-amber/25 bg-amber/10 text-amber'
+                      }`}
+                    >
+                      {group.severity}
+                    </span>
+                  </>
+                }
+              >
                 <div className="divide-y divide-line-soft">
                   {group.issues.map((issue, index) => (
                     <div
@@ -151,7 +156,7 @@ export function DoctorPage() {
                     </div>
                   ))}
                 </div>
-              </section>
+              </Disclosure>
             ))}
           </div>
         </>

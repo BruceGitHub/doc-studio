@@ -14,6 +14,10 @@ services:
       # Host edits must reach the index even when the bind mount does not
       # forward inotify events to the container.
       DOCSTUDIO_WATCH_POLL: "1"
+      # Host path of the vault, used to build vscode:// links because a
+      # container cannot launch the editor that runs on the host.
+      DOCSTUDIO_HOST_VAULT: "${DOCSTUDIO_HOST_VAULT:-}"
+      DOCSTUDIO_EDITOR_URL: "${DOCSTUDIO_EDITOR_URL:-}"
     ports:
       # Bind to loopback only: reachable from this machine, not from the LAN.
       - "127.0.0.1:${DOCSTUDIO_PORT:-4321}:4321"

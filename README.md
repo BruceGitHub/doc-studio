@@ -175,21 +175,24 @@ Read the full rules in [docs/references-convention.md](docs/references-conventio
 ## What the UI gives you
 
 - **Overview** — vault counters, what changed since the last visit, open reviews/tickets,
-  unread documents, a full-width expandable errors and warnings panel, project cards.
+  unread documents, a collapsed "Doctor issues" accordion with errors and warnings, project
+  cards.
 - **Directory tree** — the sidebar navigates the real vault layout: root → folder →
   subfolder → document. Expansion is remembered in `localStorage` and the folders that
   contain the open document are revealed automatically. "Project" stays a semantic
   grouping from frontmatter; it is not a folder rule.
 - **Project** — document tree built from `parent` edges, recent work, project health and
   status mix.
-- **Document** — rendered markdown, breadcrumb drill-up, child documents drill-down,
-  explicit references, computed backlinks, local graph, per-document issues, and
-  *Open in editor* (deep link to your editor at the right file). The right column reads
-  On this page → References → Backlinks → Graph → Drill down.
+- **Document** — rendered markdown, file path breadcrumbs, breadcrumb drill-up, child
+  documents drill-down, explicit references, computed backlinks, local graph, per-document
+  issues in a collapsed accordion, and *Open in editor* (deep link to your editor at the
+  right file). The right column reads On this page → References → Backlinks → Graph →
+  Drill down, and stays visible while the article scrolls.
 - **Search** — full-text over titles, headings, paths and body, filtered by project, type
   and status.
 - **Doctor** — grouped structural issues with explanations and jump-to-document links.
-  Error rows expand in place to show the full message and help text.
+  Each group is a collapsed accordion; error rows expand to show the full message and help
+  text.
 - **Command palette** — `⌘K` / `Ctrl+K` over the same search index.
 - **History navigation** — `←` / `→` (or the arrow buttons in the top bar) move back and
   forward through visited pages, restoring each page's scroll position.
@@ -197,6 +200,8 @@ Read the full rules in [docs/references-convention.md](docs/references-conventio
   is remembered in `localStorage`; the first visit follows the OS preference.
 - **Collapsible sidebar** — the top-bar toggle shrinks the sidebar to a 64px icon rail to
   reclaim horizontal space. The choice is remembered in `localStorage`.
+- **Page titles** — the browser tab follows the current document or view, so several open
+  tabs stay distinguishable.
 
 Live updates arrive over Server-Sent Events: edit a file, the index refreshes, the views
 refetch. A 10-second revision poll over `/api/meta` backs up the stream (buffering proxies,
@@ -219,6 +224,12 @@ Options for `serve`: `--port`, `--host`, `--editor "code -g"`, `--web-dir`, `--n
 Defaults come from `DOCSTUDIO_VAULT` and `DOCSTUDIO_EDITOR`. Set
 `DOCSTUDIO_WATCH_POLL=1` to poll instead of relying on native file events (useful for bind
 mounts and network filesystems).
+
+*Open in editor* tries to spawn the editor on the server. When the server runs in Docker it
+cannot reach the host editor, so it also returns a browser URL (for example
+`vscode://file/...`). Set `DOCSTUDIO_HOST_VAULT` to the vault path as the browser machine
+sees it, or `DOCSTUDIO_EDITOR_URL` to a custom template with `{path}` and `{line}`.
+`make start` passes the host vault path automatically (converted with `wslpath` on WSL).
 
 ## HTTP API
 

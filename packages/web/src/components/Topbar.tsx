@@ -16,7 +16,7 @@ export function Topbar({
   const nextTheme = theme.theme === 'dark' ? 'light' : 'dark'
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-canvas/85 px-5 backdrop-blur-xl lg:px-7">
+    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-canvas/85 px-4 backdrop-blur-xl lg:pl-5 lg:pr-7">
       <button
         type="button"
         onClick={onToggleSidebar}

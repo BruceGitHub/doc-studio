@@ -6,6 +6,7 @@ import { StatusDot, TypeBadge } from '../components/Badge'
 import { EmptyState, ErrorState, Loading, SectionHeader } from '../components/States'
 import { ISSUE_HELP, relativeTime } from '../lib/format'
 import { useApi } from '../lib/useApi'
+import { usePageTitle } from '../lib/usePageTitle'
 import { docHref } from '../lib/paths'
 
 export function ProjectPage() {
@@ -13,6 +14,7 @@ export function ProjectPage() {
   const detail = useApi<ProjectDetailDTO>(
     project ? `/projects/${encodeURIComponent(project)}` : null,
   )
+  usePageTitle(detail.data?.project.label)
 
   if (detail.loading && !detail.data) return <Loading label="Loading project…" />
   if (detail.error) {

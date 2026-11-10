@@ -4,13 +4,15 @@ import type { DocDetailDTO, GraphDTO, OpenResultDTO } from '@docstudio/core'
 import { post } from '../api'
 import { Markdown } from '../components/Markdown'
 import { DocRow } from '../components/DocRow'
+import { Disclosure } from '../components/Disclosure'
 import { EdgeList } from '../components/EdgeList'
 import { MiniGraph } from '../components/MiniGraph'
 import { StatusLabel, TypeBadge } from '../components/Badge'
 import { EmptyState, ErrorState, Loading } from '../components/States'
 import { absoluteTime, ISSUE_HELP, relativeTime } from '../lib/format'
 import { useApi } from '../lib/useApi'
-import { docHref, encodeDocId } from '../lib/paths'
+import { usePageTitle } from '../lib/usePageTitle'
+import { docHref, encodeDocId, pathCrumbs } from '../lib/paths'
 
 export function DocPage() {
   const params = useParams()
@@ -23,6 +25,8 @@ export function DocPage() {
   const seenRef = useRef<string | null>(null)
   const [openResult, setOpenResult] = useState<OpenResultDTO | null>(null)
   const [copied, setCopied] = useState(false)
+
+  usePageTitle(detail.data?.doc.title)
 
   useEffect(() => {
     if (!detail.data) return
@@ -76,9 +80,23 @@ export function DocPage() {
   const ticket = frontmatterString(frontmatter, 'ticket')
 
   const openInEditor = async (): Promise<void> => {
-    const result = await post<OpenResultDTO>('/open', { id: doc.id })
-    setOpenResult(result)
-    window.setTimeout(() => setOpenResult(null), 5000)
+    try {
+      const result = await post<OpenResultDTO>('/open', { id: doc.id })
+      setOpenResult(result)
+      // In a container the server cannot spawn the host editor. The response
+      // carries a vscode:// (or equivalent) URL that the browser can launch.
+      if (!result.ok && result.url) {
+        window.location.assign(result.url)
+      }
+      window.setTimeout(() => setOpenResult(null), 6000)
+    } catch (error) {
+      setOpenResult({
+        ok: false,
+        command: 'open',
+        message: error instanceof Error ? error.message : String(error),
+      })
+      window.setTimeout(() => setOpenResult(null), 6000)
+    }
   }
 
   const copyPath = async (): Promise<void> => {
@@ -116,7 +134,7 @@ export function DocPage() {
 
       {doc.parseError && <ErrorState message={doc.parseError} />}
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
         <div className="space-y-5">
           <header className="panel">
             <div className="flex flex-wrap items-center gap-2">
@@ -136,9 +154,38 @@ export function DocPage() {
               {doc.title}
             </h1>
 
-            <p className="mt-1.5 truncate font-mono text-[11px] text-faint" title={doc.path}>
-              {doc.path}.md
-            </p>
+            <nav
+              aria-label="File path"
+              className="mt-2 flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-faint"
+            >
+              <Link to="/" className="transition-colors hover:text-ink">
+                vault
+              </Link>
+              {pathCrumbs(doc.path).map((crumb) => {
+                const isProjectRoot = crumb.directory && crumb.path === doc.project
+                return (
+                  <span key={crumb.path} className="flex items-center gap-1.5">
+                    <span className="text-line">/</span>
+                    {crumb.directory ? (
+                      isProjectRoot ? (
+                        <Link
+                          to={`/p/${encodeURIComponent(doc.project)}`}
+                          className="transition-colors hover:text-ink"
+                        >
+                          {crumb.name}
+                        </Link>
+                      ) : (
+                        <span title={crumb.path}>{crumb.name}</span>
+                      )
+                    ) : (
+                      <span className="text-ink" aria-current="page">
+                        {crumb.name}
+                      </span>
+                    )}
+                  </span>
+                )
+              })}
+            </nav>
 
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line-soft pt-3.5">
               <button type="button" onClick={openInEditor} className="btn btn-primary">
@@ -166,26 +213,46 @@ export function DocPage() {
             </div>
 
             {openResult && (
-              <p
-                className={`mt-3 rounded-md px-3 py-2 font-mono text-[10px] ${
-                  openResult.ok
-                    ? 'bg-green/10 text-green'
-                    : 'bg-red/10 text-red'
+              <div
+                className={`mt-3 rounded-md px-3 py-2 ${
+                  openResult.ok ? 'bg-green/10' : 'bg-red/10'
                 }`}
               >
-                {openResult.ok
-                  ? `Opened with: ${openResult.command}`
-                  : `Could not open: ${openResult.message ?? openResult.command}`}
-              </p>
+                <p
+                  className={`font-mono text-[10px] ${
+                    openResult.ok ? 'text-green' : 'text-red'
+                  }`}
+                >
+                  {openResult.ok
+                    ? `Opened with: ${openResult.command}`
+                    : `Could not open: ${openResult.message ?? openResult.command}`}
+                </p>
+                {!openResult.ok && openResult.url && (
+                  <a
+                    href={openResult.url}
+                    className="mt-1 inline-flex text-[10px] font-medium text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent"
+                  >
+                    Open with VS Code →
+                  </a>
+                )}
+              </div>
             )}
           </header>
 
           {issues.length > 0 && (
-            <section className="card border-amber/25 bg-amber/[0.04] p-4">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-amber">
-                Doctor · {issues.length} {issues.length === 1 ? 'issue' : 'issues'}
-              </p>
-              <ul className="mt-2 space-y-2">
+            <Disclosure
+              tone="amber"
+              title={`Doctor · ${issues.length} ${
+                issues.length === 1 ? 'issue' : 'issues'
+              }`}
+              subtitle="Issues found in this document. Expand the section to read them."
+              meta={
+                <span className="font-mono text-[10px] text-amber">
+                  {issues.filter((issue) => issue.severity === 'error').length} errors
+                </span>
+              }
+            >
+              <ul className="space-y-2 px-5 py-3.5">
                 {issues.map((issue, index) => (
                   <li key={`${issue.kind}-${index}`} className="text-[12px]">
                     <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-amber">
@@ -198,7 +265,7 @@ export function DocPage() {
                   </li>
                 ))}
               </ul>
-            </section>
+            </Disclosure>
           )}
 
           <article className="panel px-6 py-6 lg:px-8">
@@ -212,7 +279,7 @@ export function DocPage() {
           </article>
         </div>
 
-        <aside className="space-y-5">
+        <aside className="space-y-5 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:self-start xl:overflow-y-auto xl:pr-1">
           {doc.headings.length > 1 && (
             <section className="panel p-0">
               <div className="panel-header">

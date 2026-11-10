@@ -3,17 +3,21 @@ import { Link } from 'react-router-dom'
 import type { AttentionDTO, MetaDTO, ProjectSummaryDTO } from '@docstudio/core'
 import { post } from '../api'
 import { DocRow } from '../components/DocRow'
+import { Disclosure } from '../components/Disclosure'
 import { IssueList } from '../components/Issues'
 import { StatusDot, TypeBadge } from '../components/Badge'
 import { EmptyState, ErrorState, Loading, SectionHeader } from '../components/States'
 import { relativeTime } from '../lib/format'
 import { useApi } from '../lib/useApi'
+import { usePageTitle } from '../lib/usePageTitle'
 
 export function HomePage() {
   const meta = useApi<MetaDTO>('/meta')
   const projects = useApi<ProjectSummaryDTO[]>('/projects')
   const attention = useApi<AttentionDTO>('/attention')
   const [marking, setMarking] = useState(false)
+
+  usePageTitle(meta.data ? 'Overview' : null)
 
   const markReviewed = async (): Promise<void> => {
     setMarking(true)
@@ -71,30 +75,26 @@ export function HomePage() {
       )}
 
       {counts && (counts.errors > 0 || counts.warnings > 0) && (
-        <section className="panel p-0">
-          <div className="panel-header items-start">
-            <div>
-              <h2 className="text-[15px] font-semibold tracking-tight text-ink">
-                Errors and warnings
-              </h2>
-              <p className="mt-0.5 text-xs text-faint">
-                Click a row to read the whole message and what to do about it.
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
+        <Disclosure
+          tone="amber"
+          title="Doctor issues"
+          subtitle="Errors and warnings in the vault index. Click a row to read the whole message and what to do about it."
+          meta={
+            <>
               <span className="font-mono text-[10px] text-faint">
-                {attention.data?.errors.length ?? 0}
+                {counts.errors} errors · {counts.warnings} warnings
               </span>
               <Link to="/doctor" className="btn btn-ghost">
                 Open doctor
               </Link>
-            </div>
-          </div>
+            </>
+          }
+        >
           <IssueList
             issues={attention.data?.errors ?? []}
             empty="No blocking errors. Open the doctor for the complete health report."
           />
-        </section>
+        </Disclosure>
       )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
