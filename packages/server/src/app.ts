@@ -9,6 +9,7 @@ import {
   safeDecode,
   Vault,
   type AttentionDTO,
+  type DirNodeDTO,
   type DocDetailDTO,
   type DocRecord,
   type DoctorDTO,
@@ -24,6 +25,7 @@ import {
 } from '@docstudio/core'
 import { openInEditor } from './editor.js'
 import { toEdge, toIssue, toSummary } from './mappers.js'
+import { buildNavTree } from './nav.js'
 import { loadState, saveState, type StudioState } from './state.js'
 import { buildProjectTree } from './tree.js'
 import { startWatcher, type VaultWatcher } from './watcher.js'
@@ -48,6 +50,15 @@ export async function createServer(options: CreateServerOptions): Promise<Server
   const editor = options.editor ?? 'code'
   const app = Fastify({ logger: false, bodyLimit: 1_000_000 })
   const clients = new Set<ServerResponse>()
+
+  // Index data must never be served from a browser cache: every reindex has to
+  // be visible on the next refetch.
+  app.addHook('onSend', async (request, reply, payload) => {
+    if (request.url.startsWith('/api/')) {
+      reply.header('Cache-Control', 'no-store')
+    }
+    return payload
+  })
 
   const broadcast = (payload: unknown): void => {
     const frame = `event: reindex\ndata: ${JSON.stringify(payload)}\n\n`
@@ -85,6 +96,8 @@ export async function createServer(options: CreateServerOptions): Promise<Server
   app.get('/api/meta', async () => meta())
 
   app.get('/api/projects', async () => vault.projects() satisfies ProjectSummaryDTO[])
+
+  app.get('/api/tree', async () => buildNavTree(vault, state) satisfies DirNodeDTO)
 
   app.get('/api/projects/:name', async (request, reply) => {
     const { name } = request.params as { name: string }

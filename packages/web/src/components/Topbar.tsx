@@ -3,7 +3,13 @@ import { usePalette } from '../palette'
 import { useTheme } from '../theme'
 import { LiveIndicator } from './LiveIndicator'
 
-export function Topbar() {
+export function Topbar({
+  sidebarCollapsed,
+  onToggleSidebar,
+}: {
+  sidebarCollapsed: boolean
+  onToggleSidebar: () => void
+}) {
   const palette = usePalette()
   const navigate = useNavigate()
   const theme = useTheme()
@@ -11,6 +17,33 @@ export function Topbar() {
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-canvas/85 px-5 backdrop-blur-xl lg:px-7">
+      <button
+        type="button"
+        onClick={onToggleSidebar}
+        className="btn btn-ghost hidden h-8 w-8 px-0 lg:inline-flex"
+        aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        aria-pressed={!sidebarCollapsed}
+      >
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <rect
+            x="2.5"
+            y="3"
+            width="11"
+            height="10"
+            rx="1.5"
+            stroke="currentColor"
+            strokeWidth="1.2"
+          />
+          <path
+            d="M6 3v10"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+
       <div className="flex items-center gap-2 lg:hidden">
         <div className="flex h-7 w-7 items-center justify-center rounded-md border border-accent/25 bg-accent/10 text-accent">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">

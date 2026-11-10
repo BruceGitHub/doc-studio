@@ -166,4 +166,21 @@ describe('Vault index', () => {
     const future = index.changesSince('2999-01-01T00:00:00.000Z')
     expect(future).toHaveLength(0)
   })
+
+  it('treats a missing last visit as everything changed', () => {
+    const index = createVault()
+    const all = index.allDocs()
+    const changed = index.changesSince(null)
+
+    expect(changed).toHaveLength(all.length)
+    expect(new Set(changed.map((item) => item.id))).toEqual(
+      new Set(all.map((item) => item.id)),
+    )
+    // Newest first.
+    for (let position = 1; position < changed.length; position += 1) {
+      expect(changed[position - 1]!.mtimeMs).toBeGreaterThanOrEqual(
+        changed[position]!.mtimeMs,
+      )
+    }
+  })
 })

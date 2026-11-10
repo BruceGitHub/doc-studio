@@ -213,21 +213,32 @@ export function DocPage() {
         </div>
 
         <aside className="space-y-5">
-          <section className="panel p-0">
-            <div className="panel-header">
-              <h2 className="text-[14px] font-semibold tracking-tight text-ink">Graph</h2>
-              <span className="font-mono text-[10px] text-faint">
-                {graph.data ? graph.data.nodes.length : 0}
-              </span>
-            </div>
-            <div className="p-3">
-              {graph.data ? (
-                <MiniGraph graph={graph.data} />
-              ) : (
-                <p className="px-1 py-6 text-center text-[11px] text-faint">Loading graph…</p>
-              )}
-            </div>
-          </section>
+          {doc.headings.length > 1 && (
+            <section className="panel p-0">
+              <div className="panel-header">
+                <h2 className="text-[14px] font-semibold tracking-tight text-ink">
+                  On this page
+                </h2>
+                <span className="font-mono text-[10px] text-faint">
+                  {doc.headings.length}
+                </span>
+              </div>
+              <nav className="space-y-0.5 p-2">
+                {doc.headings
+                  .filter((heading) => heading.depth > 1)
+                  .map((heading) => (
+                    <a
+                      key={`${heading.slug}-${heading.line}`}
+                      href={`#${heading.slug}`}
+                      className="block truncate rounded-md py-1 pr-2 text-[12px] text-dim transition-colors hover:bg-raised hover:text-ink"
+                      style={{ paddingLeft: `${(heading.depth - 2) * 12 + 10}px` }}
+                    >
+                      {heading.text}
+                    </a>
+                  ))}
+              </nav>
+            </section>
+          )}
 
           <section className="panel p-0">
             <div className="panel-header">
@@ -261,6 +272,22 @@ export function DocPage() {
             </div>
           </section>
 
+          <section className="panel p-0">
+            <div className="panel-header">
+              <h2 className="text-[14px] font-semibold tracking-tight text-ink">Graph</h2>
+              <span className="font-mono text-[10px] text-faint">
+                {graph.data ? graph.data.nodes.length : 0}
+              </span>
+            </div>
+            <div className="p-3">
+              {graph.data ? (
+                <MiniGraph graph={graph.data} />
+              ) : (
+                <p className="px-1 py-6 text-center text-[11px] text-faint">Loading graph…</p>
+              )}
+            </div>
+          </section>
+
           {children.length > 0 && (
             <section className="panel p-0">
               <div className="panel-header">
@@ -274,33 +301,6 @@ export function DocPage() {
                   <DocRow key={child.id} doc={child} />
                 ))}
               </div>
-            </section>
-          )}
-
-          {doc.headings.length > 1 && (
-            <section className="panel p-0">
-              <div className="panel-header">
-                <h2 className="text-[14px] font-semibold tracking-tight text-ink">
-                  On this page
-                </h2>
-                <span className="font-mono text-[10px] text-faint">
-                  {doc.headings.length}
-                </span>
-              </div>
-              <nav className="space-y-0.5 p-2">
-                {doc.headings
-                  .filter((heading) => heading.depth > 1)
-                  .map((heading) => (
-                    <a
-                      key={`${heading.slug}-${heading.line}`}
-                      href={`#${heading.slug}`}
-                      className="block truncate rounded-md py-1 pr-2 text-[12px] text-dim transition-colors hover:bg-raised hover:text-ink"
-                      style={{ paddingLeft: `${(heading.depth - 2) * 12 + 10}px` }}
-                    >
-                      {heading.text}
-                    </a>
-                  ))}
-              </nav>
             </section>
           )}
         </aside>

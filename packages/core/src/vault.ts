@@ -139,7 +139,11 @@ export class Vault {
   }
 
   changesSince(since: string | null): DocRecord[] {
-    if (!since) return []
+    // With no previous visit every document is "new": the caller shows the
+    // whole vault rather than a misleading empty list.
+    if (!since) {
+      return this.allDocs().sort((a, b) => b.mtimeMs - a.mtimeMs)
+    }
     const threshold = Date.parse(since)
     if (Number.isNaN(threshold)) return []
     return this.allDocs()

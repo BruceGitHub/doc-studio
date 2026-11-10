@@ -41,6 +41,10 @@ export function startWatcher(
 
   watcher = watch(vault.root, {
     ignoreInitial: true,
+    // Polling is a safety net for bind mounts and network filesystems that do
+    // not deliver inotify events into the container.
+    usePolling: process.env.DOCSTUDIO_WATCH_POLL === '1',
+    interval: 1_000,
     ignored: (candidate: string) =>
       candidate.split(path.sep).some((part) => IGNORED_PARTS.has(part)),
     awaitWriteFinish: {

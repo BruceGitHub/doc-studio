@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom'
 import type { AttentionDTO, MetaDTO, ProjectSummaryDTO } from '@docstudio/core'
 import { post } from '../api'
 import { DocRow } from '../components/DocRow'
+import { IssueList } from '../components/Issues'
 import { StatusDot, TypeBadge } from '../components/Badge'
 import { EmptyState, ErrorState, Loading, SectionHeader } from '../components/States'
 import { relativeTime } from '../lib/format'
 import { useApi } from '../lib/useApi'
-import { docHref } from '../lib/paths'
 
 export function HomePage() {
   const meta = useApi<MetaDTO>('/meta')
@@ -71,23 +71,30 @@ export function HomePage() {
       )}
 
       {counts && (counts.errors > 0 || counts.warnings > 0) && (
-        <Link
-          to="/doctor"
-          className="card card-hover flex items-center gap-3 px-4 py-3"
-        >
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber/25 bg-amber/10 text-amber">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2.5 14.5 14h-13L8 2.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-              <path d="M8 6.5v3.2M8 12h.01" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-            </svg>
-          </span>
-          <div className="min-w-0 flex-1 text-[13px] text-dim">
-            <span className="text-ink">{counts.errors} errors</span> and{' '}
-            <span className="text-ink">{counts.warnings} warnings</span> in the vault index.
-            Broken references, missing statuses and orphan documents.
+        <section className="panel p-0">
+          <div className="panel-header items-start">
+            <div>
+              <h2 className="text-[15px] font-semibold tracking-tight text-ink">
+                Errors and warnings
+              </h2>
+              <p className="mt-0.5 text-xs text-faint">
+                Click a row to read the whole message and what to do about it.
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <span className="font-mono text-[10px] text-faint">
+                {attention.data?.errors.length ?? 0}
+              </span>
+              <Link to="/doctor" className="btn btn-ghost">
+                Open doctor
+              </Link>
+            </div>
           </div>
-          <span className="shrink-0 font-mono text-[10px] text-faint">Open doctor →</span>
-        </Link>
+          <IssueList
+            issues={attention.data?.errors ?? []}
+            empty="No blocking errors. Open the doctor for the complete health report."
+          />
+        </section>
       )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -197,53 +204,22 @@ export function HomePage() {
           <section className="panel p-0">
             <div className="panel-header">
               <h2 className="text-[14px] font-semibold tracking-tight text-ink">
-                Blocking errors
+                Vault conventions
               </h2>
-              <span className="font-mono text-[10px] text-faint">
-                {attention.data?.errors.length ?? 0}
-              </span>
             </div>
-            <div className="space-y-1 p-2">
-              {attention.data?.errors.length === 0 && (
-                <p className="px-3 py-4 text-xs text-faint">
-                  No structural errors. The graph is consistent.
-                </p>
-              )}
-              {attention.data?.errors.map((issue, index) => (
-                <Link
-                  key={`${issue.doc.id}-${issue.kind}-${index}`}
-                  to={docHref(issue.doc.id)}
-                  className="block rounded-md px-3 py-2 transition-colors hover:bg-raised"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="rounded bg-red/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.08em] text-red">
-                      {issue.kind}
-                    </span>
-                    <span className="min-w-0 truncate text-[12px] text-ink">
-                      {issue.doc.title}
-                    </span>
-                  </div>
-                  <p className="mt-1 line-clamp-2 text-[11px] text-dim">{issue.message}</p>
-                </Link>
-              ))}
+            <div className="px-5 py-4">
+              <p className="text-xs leading-5 text-dim">
+                Status and type come from frontmatter. Relations come from the{' '}
+                <code className="font-mono text-[11px] text-ink">## References</code> section:
+              </p>
+              <pre className="mt-2.5 overflow-x-auto rounded-lg border border-line bg-canvas p-3 font-mono text-[10px] leading-5 text-dim">
+                {`- \`parent\`: [Overview](../README.md)\n- \`follow-up\`: [Review](./review-r1.md)\n- \`ticket\`: CHK-120`}
+              </pre>
+              <p className="mt-2.5 text-[11px] text-faint">
+                Inline links are indexed as <span className="font-mono">untyped</span>. Backlinks
+                are computed, never written.
+              </p>
             </div>
-          </section>
-
-          <section className="panel">
-            <h2 className="text-[14px] font-semibold tracking-tight text-ink">
-              Vault conventions
-            </h2>
-            <p className="mt-2 text-xs leading-5 text-dim">
-              Status and type come from frontmatter. Relations come from the{' '}
-              <code className="font-mono text-[11px] text-ink">## References</code> section:
-            </p>
-            <pre className="mt-2.5 overflow-x-auto rounded-lg border border-line bg-canvas p-3 font-mono text-[10px] leading-5 text-dim">
-              {`- \`parent\`: [Overview](../README.md)\n- \`follow-up\`: [Review](./review-r1.md)\n- \`ticket\`: CHK-120`}
-            </pre>
-            <p className="mt-2.5 text-[11px] text-faint">
-              Inline links are indexed as <span className="font-mono">untyped</span>. Backlinks
-              are computed, never written.
-            </p>
           </section>
         </div>
       </div>

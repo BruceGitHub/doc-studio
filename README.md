@@ -175,23 +175,35 @@ Read the full rules in [docs/references-convention.md](docs/references-conventio
 ## What the UI gives you
 
 - **Overview** — vault counters, what changed since the last visit, open reviews/tickets,
-  unread documents, blocking errors, project cards.
+  unread documents, a full-width expandable errors and warnings panel, project cards.
+- **Directory tree** — the sidebar navigates the real vault layout: root → folder →
+  subfolder → document. Expansion is remembered in `localStorage` and the folders that
+  contain the open document are revealed automatically. "Project" stays a semantic
+  grouping from frontmatter; it is not a folder rule.
 - **Project** — document tree built from `parent` edges, recent work, project health and
   status mix.
 - **Document** — rendered markdown, breadcrumb drill-up, child documents drill-down,
   explicit references, computed backlinks, local graph, per-document issues, and
-  *Open in editor* (deep link to your editor at the right file).
+  *Open in editor* (deep link to your editor at the right file). The right column reads
+  On this page → References → Backlinks → Graph → Drill down.
 - **Search** — full-text over titles, headings, paths and body, filtered by project, type
   and status.
 - **Doctor** — grouped structural issues with explanations and jump-to-document links.
+  Error rows expand in place to show the full message and help text.
 - **Command palette** — `⌘K` / `Ctrl+K` over the same search index.
 - **History navigation** — `←` / `→` (or the arrow buttons in the top bar) move back and
   forward through visited pages, restoring each page's scroll position.
 - **Themes** — dark and light, toggled from the sun/moon button in the top bar. The choice
   is remembered in `localStorage`; the first visit follows the OS preference.
+- **Collapsible sidebar** — the top-bar toggle shrinks the sidebar to a 64px icon rail to
+  reclaim horizontal space. The choice is remembered in `localStorage`.
 
 Live updates arrive over Server-Sent Events: edit a file, the index refreshes, the views
-refetch.
+refetch. A 10-second revision poll over `/api/meta` backs up the stream (buffering proxies,
+delayed file notifications), and the client refetches after a reconnect. API responses are
+sent `no-store`, so a stale cache can never hide an edit. In containers, set
+`DOCSTUDIO_WATCH_POLL=1` when the bind mount does not forward inotify events; the compose
+file already does.
 
 ## CLI
 
@@ -204,13 +216,16 @@ docstudio new <type> <title> [vault] [--project alpha] [--dir path]
 ```
 
 Options for `serve`: `--port`, `--host`, `--editor "code -g"`, `--web-dir`, `--no-watch`.
-Defaults come from `DOCSTUDIO_VAULT` and `DOCSTUDIO_EDITOR`.
+Defaults come from `DOCSTUDIO_VAULT` and `DOCSTUDIO_EDITOR`. Set
+`DOCSTUDIO_WATCH_POLL=1` to poll instead of relying on native file events (useful for bind
+mounts and network filesystems).
 
 ## HTTP API
 
 | Method | Route | Purpose |
 | --- | --- | --- |
 | `GET` | `/api/meta` | Vault name/root, counters, last index and visit. |
+| `GET` | `/api/tree` | Filesystem navigation tree: root → folders → documents. |
 | `GET` | `/api/projects` | Project summaries. |
 | `GET` | `/api/projects/:name` | Tree, recent documents, issues. |
 | `GET` | `/api/docs/*` | Document detail (body, headings, edges, issues). |

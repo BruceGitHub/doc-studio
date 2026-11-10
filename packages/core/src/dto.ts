@@ -67,6 +67,22 @@ export interface TreeNodeDTO {
   children: TreeNodeDTO[]
 }
 
+/**
+ * Filesystem navigation tree. The vault root is the top node; every child is a
+ * real directory. "Project" is only a semantic grouping, not a folder rule.
+ */
+export interface DirNodeDTO {
+  name: string
+  label: string
+  /** Vault-relative directory path; empty string for the root. */
+  path: string
+  /** Total documents in this directory and all descendants. */
+  docCount: number
+  /** Documents directly in this directory, sorted for display. */
+  docs: DocSummaryDTO[]
+  children: DirNodeDTO[]
+}
+
 export interface ProjectDetailDTO {
   project: ProjectSummaryDTO
   tree: TreeNodeDTO[]

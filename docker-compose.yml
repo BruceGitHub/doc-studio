@@ -11,6 +11,9 @@ services:
     command: ["serve", "/vault", "--host", "0.0.0.0", "--port", "4321"]
     environment:
       DOCSTUDIO_BLOCK_EGRESS: "1"
+      # Host edits must reach the index even when the bind mount does not
+      # forward inotify events to the container.
+      DOCSTUDIO_WATCH_POLL: "1"
     ports:
       # Bind to loopback only: reachable from this machine, not from the LAN.
       - "127.0.0.1:${DOCSTUDIO_PORT:-4321}:4321"
