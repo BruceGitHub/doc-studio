@@ -17,6 +17,7 @@ Status legend: `todo` · `in progress` · `done` · `blocked`
 | 11 | "On this page" stays visible while scrolling | done |
 | 12 | Make "Open in editor" work (including the Docker setup) | done |
 | 13 | Issue lists inside accordions, closed by default | done |
+| 14 | Markdown fidelity: raw HTML and mermaid diagrams must render | done |
 
 ## Notes
 
@@ -135,4 +136,21 @@ Outcome:
 - Overview "Doctor issues", document-level doctor issues and each doctor group
   are collapsed by default; the summary keeps counts and severity visible.
 
-Test suite: 9 files, 38 tests.
+## Task 14 — Markdown fidelity
+
+- Found while reading real vaults: raw HTML was escaped, so hand-written
+  anchors (`<a id="s-abstract"></a>`), `<details>`, `<kbd>`, `<sub>`/`<sup>` and
+  `<br>` showed up as literal text and in-page links had no target.
+  - The renderer now runs `rehype-raw` and then `rehype-sanitize` with a schema
+    based on the default one: scripts, styles, iframes and event handlers stay
+    blocked; table alignment and image `loading` are allowed; id/name clobbering
+    is disabled so explicit anchors keep working.
+- ` ```mermaid ` fences were rendered as code. Added `MermaidChart`, which
+  lazy-loads `mermaid` in its own chunk (no network at runtime), renders the SVG
+  locally, follows the app theme (re-renders on toggle) and falls back to an
+  error box plus the diagram source when the syntax is invalid. The rest of the
+  document keeps rendering.
+- Added styles for mermaid blocks, `<details>`, `<kbd>` and `<sub>`/`<sup>`.
+- Unit tests for `codeLanguage`, `mermaidSource` and the sanitizer schema.
+
+Test suite: 10 files, 43 tests.

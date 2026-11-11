@@ -183,11 +183,12 @@ Read the full rules in [docs/references-convention.md](docs/references-conventio
   grouping from frontmatter; it is not a folder rule.
 - **Project** — document tree built from `parent` edges, recent work, project health and
   status mix.
-- **Document** — rendered markdown, file path breadcrumbs, breadcrumb drill-up, child
-  documents drill-down, explicit references, computed backlinks, local graph, per-document
-  issues in a collapsed accordion, and *Open in editor* (deep link to your editor at the
-  right file). The right column reads On this page → References → Backlinks → Graph →
-  Drill down, and stays visible while the article scrolls.
+- **Document** — rendered markdown (GFM tables/task lists/footnotes, inline HTML with
+  sanitization, fenced code with highlighting, mermaid diagrams), file path breadcrumbs,
+  breadcrumb drill-up, child documents drill-down, explicit references, computed backlinks,
+  local graph, per-document issues in a collapsed accordion, and *Open in editor* (deep link
+  to your editor at the right file). The right column reads On this page → References →
+  Backlinks → Graph → Drill down, and stays visible while the article scrolls.
 - **Search** — full-text over titles, headings, paths and body, filtered by project, type
   and status.
 - **Doctor** — grouped structural issues with explanations and jump-to-document links.

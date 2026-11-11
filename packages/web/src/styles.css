@@ -355,6 +355,45 @@ html[data-theme='light'] {
   @apply list-none pl-1;
 }
 
+.md kbd {
+  @apply rounded border border-line bg-raised px-1.5 py-0.5 font-mono text-[0.8em] text-ink;
+}
+
+.md details {
+  @apply my-4 rounded-lg border border-line bg-surface/60 px-4 py-2;
+}
+
+.md summary {
+  @apply cursor-pointer py-1 text-[13px] font-medium text-ink;
+}
+
+.md sub,
+.md sup {
+  @apply text-[0.75em];
+}
+
+/* Mermaid diagrams: rendered client-side into an SVG, one chart per block. */
+.md .mermaid {
+  @apply my-4 overflow-x-auto rounded-xl border border-line p-4;
+  background-color: var(--code-bg);
+}
+
+.md .mermaid svg {
+  @apply mx-auto h-auto max-w-full;
+}
+
+.md .mermaid-error {
+  @apply my-4 rounded-xl border border-red/30 bg-red/[0.06] px-4 py-3;
+}
+
+.md .mermaid-error p {
+  @apply my-1 text-[12px] text-red;
+}
+
+.md .mermaid-error pre {
+  @apply my-2 bg-transparent p-0;
+}
+
 /* highlight.js tokens, themed with the palette */
 .hljs {
   color: var(--code-ink);
