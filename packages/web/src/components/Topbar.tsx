@@ -1,4 +1,8 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import type { MetaDTO } from '@docstudio/core'
+import { post } from '../api'
+import { useApi } from '../lib/useApi'
 import { usePalette } from '../palette'
 import { useTheme } from '../theme'
 import { LiveIndicator } from './LiveIndicator'
@@ -13,7 +17,23 @@ export function Topbar({
   const palette = usePalette()
   const navigate = useNavigate()
   const theme = useTheme()
+  const meta = useApi<MetaDTO>('/meta')
+  const [marking, setMarking] = useState(false)
   const nextTheme = theme.theme === 'dark' ? 'light' : 'dark'
+  const unread = meta.data?.counts.unread ?? 0
+
+  const markAllRead = async (): Promise<void> => {
+    if (marking || unread === 0) return
+    setMarking(true)
+    try {
+      await post('/seen-all')
+      meta.reload()
+    } catch {
+      // Keep the previous counters; the next live refresh retries the state.
+    } finally {
+      setMarking(false)
+    }
+  }
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-canvas/85 px-4 backdrop-blur-xl lg:pl-5 lg:pr-7">
@@ -125,6 +145,44 @@ export function Topbar({
         <Link to="/doctor" className="btn btn-ghost hidden sm:inline-flex">
           Health
         </Link>
+
+        <button
+          type="button"
+          onClick={markAllRead}
+          disabled={marking || unread === 0}
+          className="btn btn-ghost hidden disabled:opacity-40 sm:inline-flex"
+          title={
+            unread === 0
+              ? 'Everything is already read'
+              : `Mark ${unread} ${unread === 1 ? 'document' : 'documents'} as read`
+          }
+          aria-label={
+            unread === 0 ? 'All documents are read' : `Mark all ${unread} unread documents as read`
+          }
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="m2.5 8.5 3 3 7-7"
+              stroke="currentColor"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="m9 11.5 1.5 1.5 3.5-3.5"
+              stroke="currentColor"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="hidden md:inline">{marking ? 'Marking…' : 'Mark all read'}</span>
+          {unread > 0 && (
+            <span className="rounded-full bg-accent/15 px-1.5 py-0.5 font-mono text-[9px] text-accent">
+              {unread}
+            </span>
+          )}
+        </button>
 
         <button
           type="button"

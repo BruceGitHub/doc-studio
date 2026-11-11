@@ -18,6 +18,13 @@ Status legend: `todo` · `in progress` · `done` · `blocked`
 | 12 | Make "Open in editor" work (including the Docker setup) | done |
 | 13 | Issue lists inside accordions, closed by default | done |
 | 14 | Markdown fidelity: raw HTML and mermaid diagrams must render | done |
+| 15 | Graph: make the local graph enlargeable | done |
+| 16 | Pin documents to the top of their folder in the tree | done |
+| 17 | "On this page" must not shift while scrolling | done |
+| 18 | More horizontal room on the left for document content | done |
+| 19 | Global "Mark all as read" button | done |
+| 20 | Run several Doc Studio instances on different ports and paths | done |
+| 21 | Hide the Backlinks block when there are none | done |
 
 ## Notes
 
@@ -154,3 +161,57 @@ Outcome:
 - Unit tests for `codeLanguage`, `mermaidSource` and the sanitizer schema.
 
 Test suite: 10 files, 43 tests.
+
+## Task 15 — Enlargeable graph
+
+- `MiniGraph` now takes `size="panel" | "full"`, with a larger viewBox, wider
+  orbit, bigger nodes and longer labels for the full variant.
+- The Graph panel has an enlarge button that opens `GraphDialog`: full-screen
+  overlay, Esc/backdrop close, body scroll locked while open. Clicking a node
+  navigates and closes the dialog.
+
+## Task 16 — Pinned documents
+
+- Each document row in the sidebar tree has a pin button (visible on hover,
+  always visible once pinned). Pins live in `localStorage` under
+  `docstudio:pinned`.
+- `sortDocsWithPins` moves pinned docs above the rest of their folder while
+  keeping the original order inside both groups, so pinning is stable and
+  scoped to a folder.
+
+## Task 17 — Stable "On this page"
+
+- The breadcrumb and the parse-error banner moved inside the left column, so
+  the right column starts at the top of the grid instead of below them.
+- The aside is sticky at `top: 5.5rem` with a matching max height and
+  `overscroll-contain`, removing the 45px slide that happened on the first
+  scroll.
+
+## Task 18 — More horizontal room
+
+- Main content max width raised from 1480px to 1740px and horizontal padding
+  trimmed (`px-3`, `lg:pl-4`, `lg:pr-6`), so wide screens use the space instead
+  of centering the article with large gutters.
+
+## Task 19 — Mark all as read
+
+- New `POST /api/seen-all` marks every document in the current index as seen,
+  saves the state and broadcasts the existing `reindex` SSE frame so every open
+  tab refreshes.
+- The top bar has a "Mark all read" button with the unread count; it is disabled
+  when nothing is unread. Documents added later stay unread.
+
+## Task 20 — Multiple instances
+
+- The Makefile derives one Compose project per port: the default 4321 keeps the
+  `docstudio` project name (and its running container), any other port uses
+  `docstudio-<port>`. All compose commands pass `-p`, so instances with
+  different vaults no longer replace each other.
+- Added `make instances` and `make stop-all`, and documented the plain-compose
+  equivalent (`DOCSTUDIO_PROJECT`).
+
+## Task 21 — Hide empty Backlinks
+
+- The Backlinks panel renders only when the document has backlinks.
+
+Test suite: 11 files, 50 tests.

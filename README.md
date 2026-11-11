@@ -75,6 +75,30 @@ make start VAULT=$HOME/notes/work PORT=8080
 DOCSTUDIO_VAULT=$HOME/notes/work docker compose up --build
 ```
 
+### Several instances at once
+
+Every port gets its own Compose project (the default `4321` keeps the `docstudio`
+project name, any other port becomes `docstudio-<port>`), so instances with different
+vaults run side by side instead of replacing each other:
+
+```bash
+make start VAULT=$HOME/notes/work PORT=8080
+make start VAULT=$HOME/notes/home PORT=8081
+
+make instances        # list every running instance
+make stop PORT=8080   # stop just that one
+make stop-all         # stop them all
+```
+
+With plain Compose, set the project name as well:
+
+```bash
+DOCSTUDIO_PROJECT=notes-work DOCSTUDIO_PORT=8080 \
+DOCSTUDIO_VAULT=$HOME/notes/work docker compose up -d
+```
+
+The “seen” state is stored per vault, so read/unread does not leak between instances.
+
 `make index` and `make doctor` run the CLI in a container with `--network none`, so they
 have no network interface at all (`doctor` exits 1 when the vault has errors, on purpose).
 
@@ -179,16 +203,21 @@ Read the full rules in [docs/references-convention.md](docs/references-conventio
   cards.
 - **Directory tree** — the sidebar navigates the real vault layout: root → folder →
   subfolder → document. Expansion is remembered in `localStorage` and the folders that
-  contain the open document are revealed automatically. "Project" stays a semantic
-  grouping from frontmatter; it is not a folder rule.
+  contain the open document are revealed automatically. Hover a document to pin it to the
+  top of its folder (pins are local and remembered). "Project" stays a semantic grouping
+  from frontmatter; it is not a folder rule.
 - **Project** — document tree built from `parent` edges, recent work, project health and
   status mix.
 - **Document** — rendered markdown (GFM tables/task lists/footnotes, inline HTML with
   sanitization, fenced code with highlighting, mermaid diagrams), file path breadcrumbs,
-  breadcrumb drill-up, child documents drill-down, explicit references, computed backlinks,
-  local graph, per-document issues in a collapsed accordion, and *Open in editor* (deep link
-  to your editor at the right file). The right column reads On this page → References →
-  Backlinks → Graph → Drill down, and stays visible while the article scrolls.
+  breadcrumb drill-up, child documents drill-down, explicit references, computed backlinks
+  (hidden when there are none), local graph with a full-screen enlarge view, per-document
+  issues in a collapsed accordion, and *Open in editor* (deep link to your editor at the
+  right file). The right column reads On this page → References → Backlinks → Graph → Drill
+  down, and stays fixed while the article scrolls.
+- **Read state** — documents are marked read as you visit them; the top bar has a global
+  "Mark all read" button with the unread count, which clears every current document at
+  once. New documents stay unread.
 - **Search** — full-text over titles, headings, paths and body, filtered by project, type
   and status.
 - **Doctor** — grouped structural issues with explanations and jump-to-document links.

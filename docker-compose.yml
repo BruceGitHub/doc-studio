@@ -1,4 +1,4 @@
-name: docstudio
+name: ${DOCSTUDIO_PROJECT:-docstudio}
 
 services:
   docstudio:

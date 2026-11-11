@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import type { DirNodeDTO } from '@docstudio/core'
 import { useApi } from '../lib/useApi'
 import { docHref } from '../lib/paths'
+import { readPins, sortDocsWithPins, writePins } from '../lib/pins'
 import { StatusDot } from './Badge'
 
 const STORAGE_KEY = 'docstudio:nav-expanded'
@@ -46,6 +47,7 @@ export function NavTree() {
   const { pathname } = useLocation()
   const docId = activeDocId(pathname)
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['']))
+  const [pinned, setPinned] = useState<Set<string>>(readPins)
   const initialized = useRef(false)
 
   // Restore the last expansion, or open the first directory level on a first
@@ -96,6 +98,16 @@ export function NavTree() {
     })
   }
 
+  const togglePin = (id: string): void => {
+    setPinned((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      writePins(next)
+      return next
+    })
+  }
+
   const root = tree.data
 
   return (
@@ -113,6 +125,8 @@ export function NavTree() {
           depth={0}
           expanded={expanded}
           onToggle={toggle}
+          pinned={pinned}
+          onTogglePin={togglePin}
           activeId={docId}
           isRoot
         />
@@ -126,6 +140,8 @@ function DirectoryNode({
   depth,
   expanded,
   onToggle,
+  pinned,
+  onTogglePin,
   activeId,
   isRoot = false,
 }: {
@@ -133,12 +149,15 @@ function DirectoryNode({
   depth: number
   expanded: Set<string>
   onToggle: (path: string) => void
+  pinned: ReadonlySet<string>
+  onTogglePin: (id: string) => void
   activeId: string | null
   isRoot?: boolean
 }) {
   const open = expanded.has(node.path)
   const hasChildren = node.children.length > 0 || node.docs.length > 0
   const indent = depth * 12 + 4
+  const docs = sortDocsWithPins(node.docs, pinned)
 
   return (
     <div>
@@ -193,34 +212,55 @@ function DirectoryNode({
               depth={depth + 1}
               expanded={expanded}
               onToggle={onToggle}
+              pinned={pinned}
+              onTogglePin={onTogglePin}
               activeId={activeId}
             />
           ))}
-          {node.docs.map((doc) => {
+          {docs.map((doc) => {
             const active = doc.id === activeId
+            const isPinned = pinned.has(doc.id)
             return (
-              <Link
+              <div
                 key={doc.id}
-                to={docHref(doc.id)}
-                title={doc.path}
-                className={`group flex items-center gap-1.5 rounded-md py-1.5 pr-2 transition-colors ${
+                className={`group flex items-center gap-1 rounded-md pr-1 transition-colors ${
                   active ? 'bg-accent-soft/60' : 'hover:bg-raised'
                 }`}
                 style={{ paddingLeft: `${(depth + 1) * 12 + 4}px` }}
               >
-                <span className="flex h-4 w-3.5 shrink-0 items-center justify-center text-faint">
-                  <FileIcon />
-                </span>
-                <StatusDot status={doc.status} />
-                <span
-                  className={`min-w-0 flex-1 truncate text-[13px] ${
-                    active ? 'text-ink' : 'text-dim group-hover:text-ink'
+                <Link
+                  to={docHref(doc.id)}
+                  title={doc.path}
+                  className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5"
+                >
+                  <span className="flex h-4 w-3.5 shrink-0 items-center justify-center text-faint">
+                    <FileIcon />
+                  </span>
+                  <StatusDot status={doc.status} />
+                  <span
+                    className={`min-w-0 flex-1 truncate text-[13px] ${
+                      active ? 'text-ink' : 'text-dim group-hover:text-ink'
+                    }`}
+                  >
+                    {doc.title}
+                  </span>
+                  {doc.unread && <span className="h-1 w-1 shrink-0 rounded-full bg-accent" />}
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => onTogglePin(doc.id)}
+                  aria-label={isPinned ? `Unpin ${doc.title}` : `Pin ${doc.title} to the top`}
+                  aria-pressed={isPinned}
+                  title={isPinned ? 'Unpin from the top of the folder' : 'Pin to the top of the folder'}
+                  className={`shrink-0 rounded p-0.5 transition-opacity ${
+                    isPinned
+                      ? 'text-accent'
+                      : 'text-faint opacity-0 focus-visible:opacity-100 group-hover:opacity-100 hover:text-ink'
                   }`}
                 >
-                  {doc.title}
-                </span>
-                {doc.unread && <span className="h-1 w-1 shrink-0 rounded-full bg-accent" />}
-              </Link>
+                  <PinIcon filled={isPinned} />
+                </button>
+              </div>
             )
           })}
         </div>
@@ -268,6 +308,26 @@ function RootIcon() {
         d="M8 2.8v3.4M8 9.8v3.4M2.8 8h3.4M9.8 8h3.4"
         stroke="currentColor"
         strokeWidth="1.1"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function PinIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M6 2.5h4l-.6 3.2 2.1 2.1H4.5l2.1-2.1L6 2.5Z"
+        fill={filled ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 7.8v5.2"
+        stroke="currentColor"
+        strokeWidth="1.2"
         strokeLinecap="round"
       />
     </svg>

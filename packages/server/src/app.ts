@@ -312,6 +312,22 @@ export async function createServer(options: CreateServerOptions): Promise<Server
     return { ok: true }
   })
 
+  // Global counterpart of /api/seen: mark the whole current index as read so
+  // the unread counters start from zero. Documents added later stay unread.
+  app.post('/api/seen-all', async () => {
+    const at = new Date().toISOString()
+    const docs = vault.allDocs()
+    for (const doc of docs) state.seen[doc.id] = at
+    saveState(vault.root, state)
+    broadcast({
+      added: [],
+      updated: [],
+      removed: [],
+      seen: docs.map((doc) => doc.id),
+    })
+    return { ok: true, marked: docs.length }
+  })
+
   app.post('/api/visit', async () => {
     state.lastVisitAt = new Date().toISOString()
     saveState(vault.root, state)

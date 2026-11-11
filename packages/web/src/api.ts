@@ -3,7 +3,9 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     cache: 'no-store',
     ...init,
     headers: {
-      'Content-Type': 'application/json',
+      // Only declare a JSON body when there is one: an empty POST with
+      // `Content-Type: application/json` is rejected by Fastify.
+      ...(init?.body === undefined ? {} : { 'Content-Type': 'application/json' }),
       ...(init?.headers ?? {}),
     },
   })

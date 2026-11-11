@@ -14,30 +14,47 @@ const LINK_COLOR: Record<string, string> = {
   tracks: 'var(--link-tracks)',
 }
 
-const WIDTH = 400
-const HEIGHT = 300
+type Size = 'panel' | 'full'
 
-export function MiniGraph({ graph }: { graph: GraphDTO }) {
+const SIZES: Record<
+  Size,
+  { width: number; height: number; radius: number; wideRadius: number; label: number; focusLabel: number }
+> = {
+  panel: { width: 400, height: 300, radius: 96, wideRadius: 118, label: 9, focusLabel: 10 },
+  full: { width: 900, height: 620, radius: 205, wideRadius: 265, label: 11, focusLabel: 13 },
+}
+
+export function MiniGraph({
+  graph,
+  size = 'panel',
+  onNavigate,
+}: {
+  graph: GraphDTO
+  size?: Size
+  onNavigate?: () => void
+}) {
   const navigate = useNavigate()
+  const dimensions = SIZES[size]
+  const { width, height } = dimensions
   const focus = graph.nodes.find((node) => node.id === graph.focus)
   const others = graph.nodes.filter((node) => node.id !== graph.focus)
-  const radius = others.length > 8 ? 118 : 96
+  const radius = others.length > 8 ? dimensions.wideRadius : dimensions.radius
   const positions = new Map<string, { x: number; y: number }>()
 
-  positions.set(graph.focus, { x: WIDTH / 2, y: HEIGHT / 2 })
+  positions.set(graph.focus, { x: width / 2, y: height / 2 })
   others.forEach((node, index) => {
     const angle = (index / Math.max(others.length, 1)) * Math.PI * 2 - Math.PI / 2
     positions.set(node.id, {
-      x: WIDTH / 2 + Math.cos(angle) * radius,
-      y: HEIGHT / 2 + Math.sin(angle) * radius * 0.78,
+      x: width / 2 + Math.cos(angle) * radius,
+      y: height / 2 + Math.sin(angle) * radius * 0.78,
     })
   })
 
   return (
     <div>
       <svg
-        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        className="w-full select-none"
+        viewBox={`0 0 ${width} ${height}`}
+        className={`w-full select-none ${size === 'full' ? 'max-h-[68vh]' : ''}`}
         role="img"
         aria-label="Local document graph"
       >
@@ -56,7 +73,7 @@ export function MiniGraph({ graph }: { graph: GraphDTO }) {
                 x2={to.x}
                 y2={to.y}
                 stroke={color}
-                strokeWidth="1.2"
+                strokeWidth={size === 'full' ? '1.6' : '1.2'}
                 strokeOpacity="0.75"
               />
               {graph.links.length <= 7 && link.kind !== 'untyped' && (
@@ -64,7 +81,7 @@ export function MiniGraph({ graph }: { graph: GraphDTO }) {
                   x={midX}
                   y={midY - 4}
                   fill="var(--graph-label)"
-                  fontSize="8"
+                  fontSize={size === 'full' ? '10' : '8'}
                   fontFamily="ui-monospace, monospace"
                   textAnchor="middle"
                 >
@@ -81,11 +98,14 @@ export function MiniGraph({ graph }: { graph: GraphDTO }) {
           const isFocus = node.id === graph.focus
           const color = TYPE_COLOR[node.type] ?? TYPE_COLOR.unknown
           const labelY =
-            position.y > HEIGHT - 26 ? position.y - 15 : position.y + (isFocus ? 22 : 17)
+            position.y > height - 26 ? position.y - 15 : position.y + (isFocus ? 22 : 17)
           return (
             <g
               key={node.id}
-              onClick={() => navigate(docHref(node.id))}
+              onClick={() => {
+                onNavigate?.()
+                navigate(docHref(node.id))
+              }}
               className="cursor-pointer"
             >
               <title>{`${node.title} · ${node.type}/${node.status}`}</title>
@@ -93,7 +113,7 @@ export function MiniGraph({ graph }: { graph: GraphDTO }) {
                 <circle
                   cx={position.x}
                   cy={position.y}
-                  r="14"
+                  r={size === 'full' ? 18 : 14}
                   fill="none"
                   stroke={color}
                   strokeOpacity="0.35"
@@ -102,7 +122,7 @@ export function MiniGraph({ graph }: { graph: GraphDTO }) {
               <circle
                 cx={position.x}
                 cy={position.y}
-                r={isFocus ? 7 : 5}
+                r={isFocus ? (size === 'full' ? 10 : 7) : size === 'full' ? 7 : 5}
                 fill={color}
                 fillOpacity={isFocus ? 1 : 0.85}
               />
@@ -110,12 +130,12 @@ export function MiniGraph({ graph }: { graph: GraphDTO }) {
                 x={position.x}
                 y={labelY}
                 fill={isFocus ? 'var(--color-ink)' : 'var(--color-dim)'}
-                fontSize={isFocus ? '10' : '9'}
+                fontSize={isFocus ? dimensions.focusLabel : dimensions.label}
                 fontWeight={isFocus ? '600' : '400'}
                 textAnchor="middle"
                 fontFamily="Inter, ui-sans-serif, sans-serif"
               >
-                {truncate(node.title, isFocus ? 28 : 19)}
+                {truncate(node.title, isFocus ? (size === 'full' ? 46 : 28) : size === 'full' ? 34 : 19)}
               </text>
             </g>
           )

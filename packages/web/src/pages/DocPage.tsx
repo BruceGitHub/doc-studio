@@ -6,6 +6,7 @@ import { Markdown } from '../components/Markdown'
 import { DocRow } from '../components/DocRow'
 import { Disclosure } from '../components/Disclosure'
 import { EdgeList } from '../components/EdgeList'
+import { GraphDialog } from '../components/GraphDialog'
 import { MiniGraph } from '../components/MiniGraph'
 import { StatusLabel, TypeBadge } from '../components/Badge'
 import { EmptyState, ErrorState, Loading } from '../components/States'
@@ -25,6 +26,7 @@ export function DocPage() {
   const seenRef = useRef<string | null>(null)
   const [openResult, setOpenResult] = useState<OpenResultDTO | null>(null)
   const [copied, setCopied] = useState(false)
+  const [graphOpen, setGraphOpen] = useState(false)
 
   usePageTitle(detail.data?.doc.title)
 
@@ -111,31 +113,31 @@ export function DocPage() {
 
   return (
     <div className="space-y-5">
-      <nav className="flex flex-wrap items-center gap-1.5 text-[11px] text-faint">
-        <Link to="/" className="transition-colors hover:text-ink">
-          Overview
-        </Link>
-        <span className="text-line">/</span>
-        <Link
-          to={`/p/${encodeURIComponent(doc.project)}`}
-          className="transition-colors hover:text-ink"
-        >
-          {doc.project === 'vault' ? 'Vault' : doc.project}
-        </Link>
-        {breadcrumb.map((parent) => (
-          <span key={parent.id} className="flex items-center gap-1.5">
-            <span className="text-line">/</span>
-            <Link to={docHref(parent.id)} className="transition-colors hover:text-ink">
-              {parent.title}
-            </Link>
-          </span>
-        ))}
-      </nav>
-
-      {doc.parseError && <ErrorState message={doc.parseError} />}
-
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
         <div className="space-y-5">
+          <nav className="flex flex-wrap items-center gap-1.5 text-[11px] text-faint">
+            <Link to="/" className="transition-colors hover:text-ink">
+              Overview
+            </Link>
+            <span className="text-line">/</span>
+            <Link
+              to={`/p/${encodeURIComponent(doc.project)}`}
+              className="transition-colors hover:text-ink"
+            >
+              {doc.project === 'vault' ? 'Vault' : doc.project}
+            </Link>
+            {breadcrumb.map((parent) => (
+              <span key={parent.id} className="flex items-center gap-1.5">
+                <span className="text-line">/</span>
+                <Link to={docHref(parent.id)} className="transition-colors hover:text-ink">
+                  {parent.title}
+                </Link>
+              </span>
+            ))}
+          </nav>
+
+          {doc.parseError && <ErrorState message={doc.parseError} />}
+
           <header className="panel">
             <div className="flex flex-wrap items-center gap-2">
               <TypeBadge type={doc.type} />
@@ -279,7 +281,7 @@ export function DocPage() {
           </article>
         </div>
 
-        <aside className="space-y-5 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:self-start xl:overflow-y-auto xl:pr-1">
+        <aside className="space-y-5 xl:sticky xl:top-[5.5rem] xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pr-1 xl:overscroll-contain">
           {doc.headings.length > 1 && (
             <section className="panel p-0">
               <div className="panel-header">
@@ -327,23 +329,45 @@ export function DocPage() {
             </div>
           </section>
 
-          <section className="panel p-0">
-            <div className="panel-header">
-              <h2 className="text-[14px] font-semibold tracking-tight text-ink">
-                Backlinks
-              </h2>
-              <span className="font-mono text-[10px] text-faint">{backlinks.length}</span>
-            </div>
-            <div className="p-2">
-              <EdgeList edges={backlinks} empty="Nothing links here yet." />
-            </div>
-          </section>
+          {backlinks.length > 0 && (
+            <section className="panel p-0">
+              <div className="panel-header">
+                <h2 className="text-[14px] font-semibold tracking-tight text-ink">
+                  Backlinks
+                </h2>
+                <span className="font-mono text-[10px] text-faint">{backlinks.length}</span>
+              </div>
+              <div className="p-2">
+                <EdgeList edges={backlinks} empty="Nothing links here yet." />
+              </div>
+            </section>
+          )}
 
           <section className="panel p-0">
             <div className="panel-header">
               <h2 className="text-[14px] font-semibold tracking-tight text-ink">Graph</h2>
-              <span className="font-mono text-[10px] text-faint">
-                {graph.data ? graph.data.nodes.length : 0}
+              <span className="flex items-center gap-1.5">
+                <span className="font-mono text-[10px] text-faint">
+                  {graph.data ? graph.data.nodes.length : 0}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setGraphOpen(true)}
+                  className="btn btn-ghost h-7 w-7 px-0"
+                  aria-label="Enlarge graph"
+                  title="Enlarge graph"
+                  disabled={!graph.data}
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M6 2.5H2.5V6M10 2.5h3.5V6M6 13.5H2.5V10M10 13.5h3.5V10"
+                      stroke="currentColor"
+                      strokeWidth="1.3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
               </span>
             </div>
             <div className="p-3">
@@ -383,6 +407,10 @@ export function DocPage() {
             </Link>
           }
         />
+      )}
+
+      {graphOpen && graph.data && (
+        <GraphDialog graph={graph.data} onClose={() => setGraphOpen(false)} />
       )}
     </div>
   )
