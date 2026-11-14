@@ -1,12 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-function isTypingTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false
-  if (target.isContentEditable) return true
-  const tag = target.tagName
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
-}
+import { isTypingTarget } from './keyboard'
 
 /**
  * Browser-like history navigation with the arrow keys:

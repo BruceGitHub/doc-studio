@@ -10,9 +10,13 @@ import { LiveIndicator } from './LiveIndicator'
 export function Topbar({
   sidebarCollapsed,
   onToggleSidebar,
+  asideHidden,
+  onToggleAside,
 }: {
   sidebarCollapsed: boolean
   onToggleSidebar: () => void
+  asideHidden: boolean
+  onToggleAside: () => void
 }) {
   const palette = usePalette()
   const navigate = useNavigate()
@@ -42,7 +46,7 @@ export function Topbar({
         onClick={onToggleSidebar}
         className="btn btn-ghost hidden h-8 w-8 px-0 lg:inline-flex"
         aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        title={`${sidebarCollapsed ? 'Expand' : 'Collapse'} sidebar ([)`}
         aria-pressed={!sidebarCollapsed}
       >
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
@@ -57,6 +61,33 @@ export function Topbar({
           />
           <path
             d="M6 3v10"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        onClick={onToggleAside}
+        className="btn btn-ghost hidden h-8 w-8 px-0 xl:inline-flex"
+        aria-label={asideHidden ? 'Show details panel' : 'Hide details panel'}
+        title={`${asideHidden ? 'Show' : 'Hide'} details panel (])`}
+        aria-pressed={!asideHidden}
+      >
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <rect
+            x="2.5"
+            y="3"
+            width="11"
+            height="10"
+            rx="1.5"
+            stroke="currentColor"
+            strokeWidth="1.2"
+          />
+          <path
+            d="M10 3v10"
             stroke="currentColor"
             strokeWidth="1.2"
             strokeLinecap="round"

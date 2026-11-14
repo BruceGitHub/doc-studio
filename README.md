@@ -228,8 +228,11 @@ Read the full rules in [docs/references-convention.md](docs/references-conventio
   forward through visited pages, restoring each page's scroll position.
 - **Themes** — dark and light, toggled from the sun/moon button in the top bar. The choice
   is remembered in `localStorage`; the first visit follows the OS preference.
-- **Collapsible sidebar** — the top-bar toggle shrinks the sidebar to a 64px icon rail to
-  reclaim horizontal space. The choice is remembered in `localStorage`.
+- **Collapsible sidebar** — the top-bar toggle (or `[`) shrinks the sidebar to a 64px
+  icon rail to reclaim horizontal space. The choice is remembered in `localStorage`.
+- **Details panel** — the top-bar toggle (or `]`) hides the right column (On this page,
+  References, Backlinks, Graph, Drill down) so the article uses the full width. The choice
+  is remembered in `localStorage`.
 - **Page titles** — the browser tab follows the current document or view, so several open
   tabs stay distinguishable.
 

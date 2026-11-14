@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
+import { useLayout } from '../layout'
 import { useHistoryKeys } from '../lib/useHistoryKeys'
 import { PinnedBar } from './PinnedBar'
 import { Sidebar } from './Sidebar'
@@ -7,15 +8,6 @@ import { Topbar } from './Topbar'
 
 const scrollPositions = new Map<string, number>()
 const RESTORE_FRAMES = 40
-const SIDEBAR_KEY = 'docstudio:sidebar'
-
-function initialSidebarCollapsed(): boolean {
-  try {
-    return localStorage.getItem(SIDEBAR_KEY) === 'collapsed'
-  } catch {
-    return false
-  }
-}
 
 // Capture the outgoing scroll offset during commit, before the browser clamps
 // it to the height of the incoming page.
@@ -30,17 +22,9 @@ export function Shell() {
   const location = useLocation()
   const navigationType = useNavigationType()
   const latestScroll = useRef(0)
-  const [collapsed, setCollapsed] = useState(initialSidebarCollapsed)
+  const { sidebarCollapsed: collapsed, toggleSidebar, asideHidden, toggleAside } = useLayout()
 
   useHistoryKeys()
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(SIDEBAR_KEY, collapsed ? 'collapsed' : 'open')
-    } catch {
-      // Persisting the layout is optional.
-    }
-  }, [collapsed])
 
   // Remember the scroll offset of every history entry so Back and Forward
   // land where the reader left off.
@@ -90,11 +74,13 @@ export function Shell() {
 
   return (
     <div className="min-h-screen">
-      <Sidebar collapsed={collapsed} onExpand={() => setCollapsed(false)} />
+      <Sidebar collapsed={collapsed} onExpand={toggleSidebar} />
       <div className={collapsed ? 'lg:pl-16' : 'lg:pl-[248px]'}>
         <Topbar
           sidebarCollapsed={collapsed}
-          onToggleSidebar={() => setCollapsed((value) => !value)}
+          onToggleSidebar={toggleSidebar}
+          asideHidden={asideHidden}
+          onToggleAside={toggleAside}
         />
         <main className="mx-auto w-full max-w-[1740px] px-3 py-6 lg:pl-4 lg:pr-6">
           <PinnedBar />

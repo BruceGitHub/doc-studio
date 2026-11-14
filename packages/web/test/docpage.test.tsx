@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { renderToString } from 'react-dom/server'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { PinsProvider } from '../src/pins'
+import { LayoutContext } from '../src/layout'
 
 /**
  * DocPage loads through useApi. Render-to-string never runs effects, so the
@@ -107,5 +108,30 @@ describe('document page actions', () => {
     expect(html).toContain('no sections to jump to')
     expect(html).toContain('Open in editor')
     expect(html).toContain('Copy path')
+  })
+
+  it('drops the details column when the layout hides it', () => {
+    const html = renderToString(
+      <MemoryRouter initialEntries={['/doc/alpha/specs/checkout']}>
+        <LayoutContext.Provider
+          value={{
+            sidebarCollapsed: true,
+            toggleSidebar: () => {},
+            asideHidden: true,
+            toggleAside: () => {},
+          }}
+        >
+          <PinsProvider>
+            <Routes>
+              <Route path="/doc/*" element={<DocPage />} />
+            </Routes>
+          </PinsProvider>
+        </LayoutContext.Provider>
+      </MemoryRouter>,
+    )
+
+    expect(html).not.toContain('On this page')
+    expect(html).not.toContain('Copy path')
+    expect(html).toContain('xl:grid-cols-1')
   })
 })

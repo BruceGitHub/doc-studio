@@ -15,10 +15,12 @@ import { absoluteTime, ISSUE_HELP, relativeTime } from '../lib/format'
 import { useApi } from '../lib/useApi'
 import { usePageTitle } from '../lib/usePageTitle'
 import { docHref, encodeDocId, pathCrumbs } from '../lib/paths'
+import { useLayout } from '../layout'
 
 export function DocPage() {
   const params = useParams()
   const location = useLocation()
+  const { asideHidden } = useLayout()
   const id = (params['*'] ?? '').replace(/^\/+/, '')
   const detail = useApi<DocDetailDTO>(id ? `/docs/${encodeDocId(id)}` : null)
   const graph = useApi<GraphDTO>(
@@ -118,7 +120,11 @@ export function DocPage() {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+      <div
+        className={`grid grid-cols-1 gap-6 xl:items-start ${
+          asideHidden ? 'xl:grid-cols-1' : 'xl:grid-cols-[minmax(0,1fr)_340px]'
+        }`}
+      >
         <div className="space-y-5">
           <nav className="flex flex-wrap items-center gap-1.5 text-[11px] text-faint">
             <Link to="/" className="transition-colors hover:text-ink">
@@ -250,166 +256,168 @@ export function DocPage() {
           </article>
         </div>
 
-        <aside className="space-y-5 xl:sticky xl:top-[5.5rem] xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pr-1 xl:overscroll-contain">
-          <section className="panel p-0">
-            <div className="panel-header">
-              <h2 className="text-[14px] font-semibold tracking-tight text-ink">
-                On this page
-              </h2>
-              <span className="font-mono text-[10px] text-faint">{headingLinks.length}</span>
-            </div>
-            <div className="p-2">
-              <div className="flex items-center gap-1.5 px-1 pb-2">
-                <button type="button" onClick={openInEditor} className="btn btn-primary flex-1 px-2">
-                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                    <path
-                      d="m6 4-4 4 4 4M10 4l4 4-4 4"
-                      stroke="currentColor"
-                      strokeWidth="1.3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  Open in editor
-                </button>
-                <button type="button" onClick={copyPath} className="btn flex-1 px-2">
-                  {copied ? 'Copied' : 'Copy path'}
-                </button>
+        {!asideHidden && (
+          <aside className="space-y-5 xl:sticky xl:top-[5.5rem] xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pr-1 xl:overscroll-contain">
+            <section className="panel p-0">
+              <div className="panel-header">
+                <h2 className="text-[14px] font-semibold tracking-tight text-ink">
+                  On this page
+                </h2>
+                <span className="font-mono text-[10px] text-faint">{headingLinks.length}</span>
               </div>
+              <div className="p-2">
+                <div className="flex items-center gap-1.5 px-1 pb-2">
+                  <button type="button" onClick={openInEditor} className="btn btn-primary flex-1 px-2">
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                      <path
+                        d="m6 4-4 4 4 4M10 4l4 4-4 4"
+                        stroke="currentColor"
+                        strokeWidth="1.3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Open in editor
+                  </button>
+                  <button type="button" onClick={copyPath} className="btn flex-1 px-2">
+                    {copied ? 'Copied' : 'Copy path'}
+                  </button>
+                </div>
 
-              {openResult && (
-                <div
-                  className={`mx-1 mb-2 rounded-md px-2.5 py-1.5 ${
-                    openResult.ok ? 'bg-green/10' : 'bg-red/10'
-                  }`}
-                >
-                  <p
-                    className={`font-mono text-[10px] ${
-                      openResult.ok ? 'text-green' : 'text-red'
+                {openResult && (
+                  <div
+                    className={`mx-1 mb-2 rounded-md px-2.5 py-1.5 ${
+                      openResult.ok ? 'bg-green/10' : 'bg-red/10'
                     }`}
                   >
-                    {openResult.ok
-                      ? `Opened with: ${openResult.command}`
-                      : `Could not open: ${openResult.message ?? openResult.command}`}
+                    <p
+                      className={`font-mono text-[10px] ${
+                        openResult.ok ? 'text-green' : 'text-red'
+                      }`}
+                    >
+                      {openResult.ok
+                        ? `Opened with: ${openResult.command}`
+                        : `Could not open: ${openResult.message ?? openResult.command}`}
+                    </p>
+                    {!openResult.ok && openResult.url && (
+                      <a
+                        href={openResult.url}
+                        className="mt-1 inline-flex text-[10px] font-medium text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent"
+                      >
+                        Open with VS Code →
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {headingLinks.length > 0 ? (
+                  <nav className="space-y-0.5 border-t border-line-soft pt-1.5">
+                    {headingLinks.map((heading) => (
+                      <a
+                        key={`${heading.slug}-${heading.line}`}
+                        href={`#${heading.slug}`}
+                        className="block truncate rounded-md py-1 pr-2 text-[12px] text-dim transition-colors hover:bg-raised hover:text-ink"
+                        style={{ paddingLeft: `${(heading.depth - 2) * 12 + 10}px` }}
+                      >
+                        {heading.text}
+                      </a>
+                    ))}
+                  </nav>
+                ) : (
+                  <p className="border-t border-line-soft px-2.5 pb-1 pt-2 text-[11px] text-faint">
+                    This document has no sections to jump to.
                   </p>
-                  {!openResult.ok && openResult.url && (
-                    <a
-                      href={openResult.url}
-                      className="mt-1 inline-flex text-[10px] font-medium text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent"
-                    >
-                      Open with VS Code →
-                    </a>
-                  )}
+                )}
+              </div>
+            </section>
+
+            <section className="panel p-0">
+              <div className="panel-header">
+                <h2 className="text-[14px] font-semibold tracking-tight text-ink">
+                  References
+                </h2>
+                <span className="font-mono text-[10px] text-faint">{outgoing.length}</span>
+              </div>
+              <div className="p-2">
+                {outgoing.some((edge) => edge.kind === 'parent' && !edge.resolved) && (
+                  <p className="px-3 pb-1 pt-2 text-[10px] text-amber">
+                    Parent reference is broken: this document will look like an orphan.
+                  </p>
+                )}
+                <EdgeList
+                  edges={outgoing}
+                  empty="No references. Add a `## References` section to declare relations."
+                />
+              </div>
+            </section>
+
+            {backlinks.length > 0 && (
+              <section className="panel p-0">
+                <div className="panel-header">
+                  <h2 className="text-[14px] font-semibold tracking-tight text-ink">
+                    Backlinks
+                  </h2>
+                  <span className="font-mono text-[10px] text-faint">{backlinks.length}</span>
                 </div>
-              )}
+                <div className="p-2">
+                  <EdgeList edges={backlinks} empty="Nothing links here yet." />
+                </div>
+              </section>
+            )}
 
-              {headingLinks.length > 0 ? (
-                <nav className="space-y-0.5 border-t border-line-soft pt-1.5">
-                  {headingLinks.map((heading) => (
-                    <a
-                      key={`${heading.slug}-${heading.line}`}
-                      href={`#${heading.slug}`}
-                      className="block truncate rounded-md py-1 pr-2 text-[12px] text-dim transition-colors hover:bg-raised hover:text-ink"
-                      style={{ paddingLeft: `${(heading.depth - 2) * 12 + 10}px` }}
-                    >
-                      {heading.text}
-                    </a>
-                  ))}
-                </nav>
-              ) : (
-                <p className="border-t border-line-soft px-2.5 pb-1 pt-2 text-[11px] text-faint">
-                  This document has no sections to jump to.
-                </p>
-              )}
-            </div>
-          </section>
-
-          <section className="panel p-0">
-            <div className="panel-header">
-              <h2 className="text-[14px] font-semibold tracking-tight text-ink">
-                References
-              </h2>
-              <span className="font-mono text-[10px] text-faint">{outgoing.length}</span>
-            </div>
-            <div className="p-2">
-              {outgoing.some((edge) => edge.kind === 'parent' && !edge.resolved) && (
-                <p className="px-3 pb-1 pt-2 text-[10px] text-amber">
-                  Parent reference is broken: this document will look like an orphan.
-                </p>
-              )}
-              <EdgeList
-                edges={outgoing}
-                empty="No references. Add a `## References` section to declare relations."
-              />
-            </div>
-          </section>
-
-          {backlinks.length > 0 && (
             <section className="panel p-0">
               <div className="panel-header">
-                <h2 className="text-[14px] font-semibold tracking-tight text-ink">
-                  Backlinks
-                </h2>
-                <span className="font-mono text-[10px] text-faint">{backlinks.length}</span>
-              </div>
-              <div className="p-2">
-                <EdgeList edges={backlinks} empty="Nothing links here yet." />
-              </div>
-            </section>
-          )}
-
-          <section className="panel p-0">
-            <div className="panel-header">
-              <h2 className="text-[14px] font-semibold tracking-tight text-ink">Graph</h2>
-              <span className="flex items-center gap-1.5">
-                <span className="font-mono text-[10px] text-faint">
-                  {graph.data ? graph.data.nodes.length : 0}
+                <h2 className="text-[14px] font-semibold tracking-tight text-ink">Graph</h2>
+                <span className="flex items-center gap-1.5">
+                  <span className="font-mono text-[10px] text-faint">
+                    {graph.data ? graph.data.nodes.length : 0}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setGraphOpen(true)}
+                    className="btn btn-ghost h-7 w-7 px-0"
+                    aria-label="Enlarge graph"
+                    title="Enlarge graph"
+                    disabled={!graph.data}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                      <path
+                        d="M6 2.5H2.5V6M10 2.5h3.5V6M6 13.5H2.5V10M10 13.5h3.5V10"
+                        stroke="currentColor"
+                        strokeWidth="1.3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setGraphOpen(true)}
-                  className="btn btn-ghost h-7 w-7 px-0"
-                  aria-label="Enlarge graph"
-                  title="Enlarge graph"
-                  disabled={!graph.data}
-                >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                    <path
-                      d="M6 2.5H2.5V6M10 2.5h3.5V6M6 13.5H2.5V10M10 13.5h3.5V10"
-                      stroke="currentColor"
-                      strokeWidth="1.3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              </span>
-            </div>
-            <div className="p-3">
-              {graph.data ? (
-                <MiniGraph graph={graph.data} />
-              ) : (
-                <p className="px-1 py-6 text-center text-[11px] text-faint">Loading graph…</p>
-              )}
-            </div>
-          </section>
-
-          {children.length > 0 && (
-            <section className="panel p-0">
-              <div className="panel-header">
-                <h2 className="text-[14px] font-semibold tracking-tight text-ink">
-                  Drill down
-                </h2>
-                <span className="font-mono text-[10px] text-faint">{children.length}</span>
               </div>
-              <div className="p-2">
-                {children.map((child) => (
-                  <DocRow key={child.id} doc={child} />
-                ))}
+              <div className="p-3">
+                {graph.data ? (
+                  <MiniGraph graph={graph.data} />
+                ) : (
+                  <p className="px-1 py-6 text-center text-[11px] text-faint">Loading graph…</p>
+                )}
               </div>
             </section>
-          )}
-        </aside>
+
+            {children.length > 0 && (
+              <section className="panel p-0">
+                <div className="panel-header">
+                  <h2 className="text-[14px] font-semibold tracking-tight text-ink">
+                    Drill down
+                  </h2>
+                  <span className="font-mono text-[10px] text-faint">{children.length}</span>
+                </div>
+                <div className="p-2">
+                  {children.map((child) => (
+                    <DocRow key={child.id} doc={child} />
+                  ))}
+                </div>
+              </section>
+            )}
+          </aside>
+        )}
       </div>
 
       {children.length === 0 && outgoing.length === 0 && backlinks.length === 0 && (

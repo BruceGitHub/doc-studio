@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './styles.css'
 import App from './App'
+import { LayoutProvider } from './layout'
 import { LiveProvider } from './live'
 import { PaletteProvider } from './palette'
 import { PinsProvider } from './pins'
@@ -18,7 +19,9 @@ createRoot(container).render(
         <LiveProvider>
           <PaletteProvider>
             <PinsProvider>
-              <App />
+              <LayoutProvider>
+                <App />
+              </LayoutProvider>
             </PinsProvider>
           </PaletteProvider>
         </LiveProvider>
