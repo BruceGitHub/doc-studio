@@ -202,6 +202,9 @@ importers:
       mdast-util-to-string:
         specifier: ^4.0.0
         version: 4.0.0
+      parse5:
+        specifier: ^8.1.1
+        version: 8.1.1
       picomatch:
         specifier: ^4.0.7
         version: 4.0.7
@@ -242,12 +245,21 @@ importers:
       '@docstudio/core':
         specifier: workspace:*
         version: link:../core
+      hast-util-from-parse5:
+        specifier: ^8.0.4
+        version: 8.0.4
+      hast-util-to-jsx-runtime:
+        specifier: ^2.3.7
+        version: 2.3.7(supports-color@10.2.2)
       highlight.js:
         specifier: ^11.12.0
         version: 11.12.0
       mermaid:
         specifier: ^12.3.0
         version: 12.3.0
+      parse5:
+        specifier: ^8.1.1
+        version: 8.1.1
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -275,6 +287,9 @@ importers:
       remark-gfm:
         specifier: ^4.0.1
         version: 4.0.1(supports-color@10.2.2)
+      unified:
+        specifier: ^11.0.5
+        version: 11.0.5
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.3.4

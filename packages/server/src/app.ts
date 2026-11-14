@@ -170,6 +170,7 @@ export async function createServer(options: CreateServerOptions): Promise<Server
     const payload: DocDetailDTO = {
       doc: {
         ...toSummary(doc, state),
+        format: doc.format,
         body: doc.body,
         headings: doc.headings,
         frontmatter: doc.frontmatter,

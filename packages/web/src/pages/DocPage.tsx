@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom'
 import type { DocDetailDTO, GraphDTO, OpenResultDTO } from '@docstudio/core'
 import { post } from '../api'
 import { Markdown } from '../components/Markdown'
+import { HtmlDocument } from '../components/HtmlDocument'
 import { DocRow } from '../components/DocRow'
 import { Disclosure } from '../components/Disclosure'
 import { EdgeList } from '../components/EdgeList'
@@ -142,6 +143,9 @@ export function DocPage() {
             <div className="flex flex-wrap items-center gap-2">
               <TypeBadge type={doc.type} />
               <StatusLabel status={doc.status} />
+              {doc.format === 'html' && (
+                <span className="chip border-line bg-raised text-dim">HTML</span>
+              )}
               {ticket && (
                 <span className="chip border-line bg-raised text-dim">{ticket}</span>
               )}
@@ -271,8 +275,12 @@ export function DocPage() {
           )}
 
           <article className="panel px-6 py-6 lg:px-8">
-            <Markdown body={doc.body} sourcePath={doc.path} />
-            {!doc.hasReferencesSection && (
+            {doc.format === 'html' ? (
+              <HtmlDocument body={doc.body} sourcePath={doc.path} />
+            ) : (
+              <Markdown body={doc.body} sourcePath={doc.path} />
+            )}
+            {doc.format !== 'html' && !doc.hasReferencesSection && (
               <p className="mt-8 border-t border-line-soft pt-3 text-[11px] text-faint">
                 No <span className="font-mono">## References</span> section: this document is
                 not connected to the graph.

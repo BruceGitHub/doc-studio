@@ -1,9 +1,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { isOpenStatus, typeRank } from './constants.js'
-import { parseDoc } from './parse.js'
+import { parseDoc, stripExtension } from './parse.js'
 import { resolveRefs } from './resolve.js'
-import { scanVault } from './scan.js'
+import { DEFAULT_EXTENSIONS, scanVault } from './scan.js'
 import { SearchIndex } from './search.js'
 import type {
   DocRecord,
@@ -18,7 +18,7 @@ import type {
   VaultStats,
 } from './types.js'
 
-const CACHE_VERSION = 3
+const CACHE_VERSION = 4
 const DEFAULT_STALE_DAYS = 21
 
 export interface VaultOptions {
@@ -65,7 +65,7 @@ export class Vault {
     this.options = {
       ignore: options.ignore ?? [],
       referenceHeadings: options.referenceHeadings ?? [],
-      extensions: options.extensions ?? ['.md'],
+      extensions: options.extensions ?? DEFAULT_EXTENSIONS,
       staleDays: options.staleDays ?? DEFAULT_STALE_DAYS,
       persistCache: options.persistCache ?? true,
     }
@@ -237,7 +237,7 @@ export class Vault {
       if (!stat.isFile()) continue
 
       const mtimeMs = Math.round(stat.mtimeMs)
-      const id = relative.replace(/\.(md|markdown)$/i, '')
+      const id = stripExtension(relative)
       const cached = this.cache.files[relative]
       let doc: ParsedDoc
 
@@ -419,7 +419,7 @@ export class Vault {
         }
       }
 
-      if (doc.type === 'unknown') {
+      if (doc.format !== 'html' && doc.type === 'unknown') {
         issues.push({
           kind: 'missing-type',
           severity: 'warning',
@@ -427,7 +427,7 @@ export class Vault {
           message: 'No document type. Add `type` to frontmatter or use a known folder.',
         })
       }
-      if (doc.status === 'unknown') {
+      if (doc.format !== 'html' && doc.status === 'unknown') {
         issues.push({
           kind: 'missing-status',
           severity: 'warning',
@@ -436,6 +436,7 @@ export class Vault {
         })
       }
       if (
+        doc.format !== 'html' &&
         !doc.hasReferencesSection &&
         doc.type !== 'project' &&
         !doc.outgoing.some((edge) => edge.source === 'references')
@@ -449,7 +450,13 @@ export class Vault {
       }
 
       const rootId = this.projectRoots.get(doc.project) ?? null
-      if (rootId && doc.type !== 'project' && doc.id !== rootId && !doc.parent) {
+      if (
+        doc.format !== 'html' &&
+        rootId &&
+        doc.type !== 'project' &&
+        doc.id !== rootId &&
+        !doc.parent
+      ) {
         issues.push({
           kind: 'orphan',
           severity: 'warning',

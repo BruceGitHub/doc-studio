@@ -1,4 +1,4 @@
-import type { IssueKind } from './types.js'
+import type { DocFormat, IssueKind } from './types.js'
 
 export interface HeadingDTO {
   depth: number
@@ -22,6 +22,7 @@ export interface DocSummaryDTO {
 
 export interface DocDetailDTO {
   doc: DocSummaryDTO & {
+    format: DocFormat
     body: string
     headings: HeadingDTO[]
     frontmatter: Record<string, unknown>

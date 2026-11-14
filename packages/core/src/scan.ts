@@ -2,6 +2,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import picomatch from 'picomatch'
 
+/** Documents Doc Studio indexes out of the box. */
+export const DEFAULT_EXTENSIONS = ['.md', '.markdown', '.html', '.htm']
+
 const DEFAULT_IGNORE = [
   '**/node_modules/**',
   '**/.git/**',
@@ -23,7 +26,7 @@ export function scanVault(root: string, options: ScanOptions = {}): string[] {
   const patterns = [...DEFAULT_IGNORE, ...(options.ignore ?? [])]
   const isIgnored = picomatch(patterns, { dot: true })
   const extensions = new Set(
-    (options.extensions ?? ['.md']).map((extension) => extension.toLowerCase()),
+    (options.extensions ?? DEFAULT_EXTENSIONS).map((extension) => extension.toLowerCase()),
   )
   const files: string[] = []
 

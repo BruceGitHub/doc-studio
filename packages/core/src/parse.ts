@@ -6,9 +6,18 @@ import remarkParse from 'remark-parse'
 import { visit } from 'unist-util-visit'
 import { toString } from 'mdast-util-to-string'
 import GithubSlugger from 'github-slugger'
+import { parse as parseHtml, serialize as serializeHtml, type DefaultTreeAdapterTypes } from 'parse5'
 import type { Heading as MdHeading, Link, ListItem, Paragraph, Root, RootContent } from 'mdast'
 import { normalizeHeading } from './anchors.js'
-import type { Heading, ParsedDoc, RawRef } from './types.js'
+import type { DocFormat, Heading, ParsedDoc, RawRef } from './types.js'
+
+type HtmlNode = DefaultTreeAdapterTypes.Node
+type HtmlElement = DefaultTreeAdapterTypes.Element
+type HtmlParentNode = DefaultTreeAdapterTypes.ParentNode
+
+const HTML_EXTENSION = /\.html?$/i
+const DOC_EXTENSION = /\.(md|markdown|html?)$/i
+const DOCSTUDIO_META_PREFIX = 'docstudio:'
 
 const DEFAULT_REFERENCE_HEADINGS = [
   'references',
@@ -70,6 +79,15 @@ export function stripExtension(relPath: string): string {
   return relPath.replace(/\.(md|markdown)$/i, '')
 }
 
+/** Strips every extension Doc Studio understands, for display names. */
+function stripDocExtension(value: string): string {
+  return value.replace(DOC_EXTENSION, '')
+}
+
+function isHtmlPath(relPath: string): boolean {
+  return HTML_EXTENSION.test(relPath)
+}
+
 export function parseDoc(
   absPath: string,
   relPath: string,
@@ -78,12 +96,14 @@ export function parseDoc(
   options: ParseOptions = {},
 ): ParsedDoc {
   const id = stripExtension(relPath)
+  const format: DocFormat = isHtmlPath(relPath) ? 'html' : 'markdown'
   const updatedAt = new Date(mtimeMs).toISOString()
   const base: ParsedDoc = {
     id,
     path: relPath,
     absPath,
-    title: humanize(path.posix.basename(id)),
+    format,
+    title: humanize(path.posix.basename(stripDocExtension(id))),
     type: 'unknown',
     status: 'unknown',
     project: projectFor(id),
@@ -111,6 +131,11 @@ export function parseDoc(
   }
 
   raw = raw.replace(/^\uFEFF/, '')
+
+  if (format === 'html') {
+    return parseHtmlDoc(raw, id, relPath, base)
+  }
+
   let frontmatter: Record<string, unknown> = {}
   let body = raw
   let parseError: string | undefined
@@ -163,6 +188,219 @@ export function parseDoc(
     hasReferencesSection: section !== null,
     ...(parseError ? { parseError } : {}),
   }
+}
+
+function parseHtmlDoc(
+  raw: string,
+  id: string,
+  relPath: string,
+  base: ParsedDoc,
+): ParsedDoc {
+  let document: DefaultTreeAdapterTypes.Document
+  try {
+    document = parseHtml(raw, { sourceCodeLocationInfo: true })
+  } catch (error) {
+    return { ...base, parseError: `Invalid HTML: ${errorMessage(error)}` }
+  }
+
+  const head = findHtmlElement(document, 'head')
+  const body = findHtmlElement(document, 'body')
+  const frontmatter = collectDocstudioMeta(head)
+  const headings = collectHtmlHeadings(body)
+  const refs = collectHtmlRefs(body)
+  const documentTitle = head ? htmlText(findHtmlElement(head, 'title')) : ''
+  const title =
+    normalizeText(documentTitle) ||
+    headings.find((heading) => heading.depth === 1)?.text ||
+    humanize(path.posix.basename(stripDocExtension(id)))
+
+  return {
+    ...base,
+    ...metadataFromFrontmatter(frontmatter, id, relPath),
+    title,
+    frontmatter,
+    body: body ? serializeHtml(body) : '',
+    text: normalizeText(body ? htmlText(body) : ''),
+    headings,
+    refs,
+  }
+}
+
+function isHtmlElement(node: HtmlNode): node is HtmlElement {
+  return 'tagName' in node && typeof node.tagName === 'string'
+}
+
+function findHtmlElement(root: HtmlNode | null, tagName: string): HtmlElement | null {
+  if (!root) return null
+  if (isHtmlElement(root) && root.tagName.toLowerCase() === tagName) return root
+  if (!('childNodes' in root)) return null
+  for (const child of root.childNodes) {
+    const found = findHtmlElement(child, tagName)
+    if (found) return found
+  }
+  return null
+}
+
+const HTML_BLOCK_TAGS = new Set([
+  'address',
+  'article',
+  'aside',
+  'blockquote',
+  'br',
+  'dd',
+  'details',
+  'div',
+  'dl',
+  'dt',
+  'figcaption',
+  'figure',
+  'footer',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'header',
+  'hr',
+  'li',
+  'main',
+  'nav',
+  'ol',
+  'p',
+  'pre',
+  'section',
+  'summary',
+  'table',
+  'tbody',
+  'td',
+  'tfoot',
+  'th',
+  'thead',
+  'tr',
+  'ul',
+])
+
+function htmlText(node: HtmlNode | null): string {
+  if (!node) return ''
+  if (node.nodeName === '#text' && 'value' in node) return node.value
+  if (!('childNodes' in node)) return ''
+  const tag = isHtmlElement(node) ? node.tagName.toLowerCase() : ''
+  if (['script', 'style', 'template', 'noscript'].includes(tag)) return ''
+
+  const block = isHtmlElement(node) && HTML_BLOCK_TAGS.has(tag)
+  let inner = ''
+  let previousBlock = false
+  for (const child of node.childNodes) {
+    const childTag = isHtmlElement(child) ? child.tagName.toLowerCase() : ''
+    const childBlock =
+      childTag !== '' &&
+      (HTML_BLOCK_TAGS.has(childTag) ||
+        ['script', 'style', 'template', 'noscript'].includes(childTag))
+    if (inner !== '' && (previousBlock || childBlock)) inner += ' '
+    inner += htmlText(child)
+    previousBlock = childBlock
+  }
+  return block ? ` ${inner} ` : inner
+}
+
+function htmlAttr(element: HtmlElement, name: string): string | undefined {
+  return element.attrs.find((attr) => attr.name.toLowerCase() === name)?.value
+}
+
+function setHtmlAttr(element: HtmlElement, name: string, value: string): void {
+  const existing = element.attrs.find((attr) => attr.name.toLowerCase() === name)
+  if (existing) existing.value = value
+  else element.attrs.push({ name, value })
+}
+
+function collectHtmlHeadings(root: HtmlNode | null): Heading[] {
+  const headings: Heading[] = []
+  if (!root) return headings
+
+  const slugger = new GithubSlugger()
+  const used = new Set<string>()
+  const unique = (base: string): string => {
+    let slug = base
+    let suffix = 1
+    while (used.has(slug)) slug = `${base}-${suffix++}`
+    used.add(slug)
+    return slug
+  }
+
+  const walk = (node: HtmlNode): void => {
+    if (isHtmlElement(node)) {
+      const match = /^h([1-6])$/.exec(node.tagName.toLowerCase())
+      if (match) {
+        const text = normalizeText(htmlText(node))
+        if (text) {
+          const existing = htmlAttr(node, 'id')
+          const slug = unique(existing ?? slugger.slug(text))
+          if (slug !== existing) setHtmlAttr(node, 'id', slug)
+          headings.push({
+            depth: Number(match[1]),
+            text,
+            slug,
+            line: node.sourceCodeLocation?.startLine ?? 0,
+          })
+        }
+      }
+    }
+    if ('childNodes' in node) {
+      for (const child of node.childNodes) walk(child)
+    }
+  }
+
+  walk(root)
+  return headings
+}
+
+function collectHtmlRefs(root: HtmlNode | null): RawRef[] {
+  const refs: RawRef[] = []
+  if (!root) return refs
+
+  const walk = (node: HtmlNode): void => {
+    if (isHtmlElement(node) && node.tagName.toLowerCase() === 'a') {
+      const href = htmlAttr(node, 'href')?.trim()
+      if (href && !href.startsWith('#')) {
+        refs.push({
+          kind: 'untyped',
+          target: href,
+          label: normalizeText(htmlText(node)) || href,
+          line: node.sourceCodeLocation?.startLine ?? 0,
+          source: 'inline',
+          external: isExternalTarget(href),
+        })
+      }
+    }
+    if ('childNodes' in node) {
+      for (const child of node.childNodes) walk(child)
+    }
+  }
+
+  walk(root)
+  return dedupe(refs)
+}
+
+function collectDocstudioMeta(head: HtmlElement | null): Record<string, unknown> {
+  const frontmatter: Record<string, unknown> = {}
+  if (!head) return frontmatter
+
+  const walk = (node: HtmlNode): void => {
+    if (isHtmlElement(node) && node.tagName.toLowerCase() === 'meta') {
+      const name = htmlAttr(node, 'name')?.trim().toLowerCase()
+      const content = htmlAttr(node, 'content')?.trim()
+      if (name?.startsWith(DOCSTUDIO_META_PREFIX) && content) {
+        frontmatter[name.slice(DOCSTUDIO_META_PREFIX.length)] = content
+      }
+    }
+    if ('childNodes' in node) {
+      for (const child of node.childNodes) walk(child)
+    }
+  }
+
+  walk(head)
+  return frontmatter
 }
 
 function metadataFromFrontmatter(
@@ -379,7 +617,7 @@ function normalizeStatus(status: string): string {
 function inferType(relPath: string): string {
   const segments = relPath.split('/')
   const file = segments.at(-1)?.toLowerCase() ?? ''
-  const id = stripExtension(file)
+  const id = stripDocExtension(file)
   if ((id === 'readme' || id === 'project') && segments.length <= 2) return 'project'
   for (let index = segments.length - 2; index >= 0; index -= 1) {
     const segment = segments[index]?.toLowerCase()

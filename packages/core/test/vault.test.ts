@@ -184,3 +184,41 @@ describe('Vault index', () => {
     }
   })
 })
+
+describe('Vault index with HTML documents', () => {
+  it('indexes html files without markdown-only warnings', () => {
+    vault = createTempVault({
+      'alpha/reports/status.html': `<!doctype html>
+<html><head><title>Status report</title></head>
+<body><h1>Status report</h1><a href="../README.md">Project</a></body></html>`,
+      'alpha/README.md': doc({
+        title: 'Alpha project',
+        type: 'project',
+        status: 'active',
+        project: 'alpha',
+      }),
+      'alpha/specs/checkout.md': doc({
+        title: 'Checkout v2',
+        type: 'spec',
+        status: 'active',
+        project: 'alpha',
+        references: '- `parent`: [Alpha project](../README.md)',
+      }),
+    })
+
+    const index = Vault.open(vault.root, { persistCache: false })
+    const html = index.getDoc('alpha/reports/status.html')
+
+    expect(html?.format).toBe('html')
+    expect(html?.outgoing[0]?.to).toBe('alpha/README')
+
+    const kinds = index
+      .issues()
+      .filter((issue) => issue.docId === 'alpha/reports/status.html')
+      .map((issue) => issue.kind)
+    expect(kinds).not.toContain('missing-type')
+    expect(kinds).not.toContain('missing-status')
+    expect(kinds).not.toContain('missing-references')
+    expect(kinds).not.toContain('orphan')
+  })
+})

@@ -98,3 +98,68 @@ describe('parseDoc', () => {
     expect(parsed.headings.map((heading) => heading.slug)).toContain('rollback--recovery')
   })
 })
+
+describe('parseDoc HTML', () => {
+  it('indexes standalone HTML documents with metadata, headings and links', () => {
+    vault = createTempVault({
+      'alpha/reports/status.html': `<!doctype html>
+<html>
+  <head>
+    <title>Status report</title>
+    <meta name="docstudio:type" content="report" />
+    <meta name="docstudio:status" content="active" />
+    <meta name="docstudio:project" content="alpha" />
+    <meta name="docstudio:tags" content="ops, 2026" />
+  </head>
+  <body>
+    <h1>Status report</h1>
+    <h2 id="details">Details</h2>
+    <h2>Details</h2>
+    <p>See <a href="../README.md#alpha">the project</a> and
+      <a href="https://example.com">docs</a>.</p>
+  </body>
+</html>`,
+    })
+
+    const file = `${vault.root}/alpha/reports/status.html`
+    const stat = fs.statSync(file)
+    const parsed = parseDoc(file, 'alpha/reports/status.html', Math.round(stat.mtimeMs), stat.size)
+
+    expect(parsed.format).toBe('html')
+    expect(parsed.id).toBe('alpha/reports/status.html')
+    expect(parsed.title).toBe('Status report')
+    expect(parsed.type).toBe('report')
+    expect(parsed.status).toBe('active')
+    expect(parsed.project).toBe('alpha')
+    expect(parsed.tags).toEqual(['ops', '2026'])
+    expect(parsed.hasReferencesSection).toBe(false)
+    expect(parsed.headings.map((heading) => heading.slug)).toEqual([
+      'status-report',
+      'details',
+      'details-1',
+    ])
+    // Generated ids are injected into the body so the table of contents works.
+    expect(parsed.body).toContain('id="details-1"')
+    expect(parsed.body).not.toContain('<title>')
+    expect(parsed.text).toContain('See the project and docs.')
+    expect(parsed.refs.map((ref) => ref.target)).toEqual([
+      '../README.md#alpha',
+      'https://example.com',
+    ])
+  })
+
+  it('falls back to the first h1 and folder type for HTML without metadata', () => {
+    vault = createTempVault({
+      'alpha/specs/landing.htm': '<!doctype html><html><body><h1>Landing page</h1></body></html>',
+    })
+
+    const file = `${vault.root}/alpha/specs/landing.htm`
+    const stat = fs.statSync(file)
+    const parsed = parseDoc(file, 'alpha/specs/landing.htm', Math.round(stat.mtimeMs), stat.size)
+
+    expect(parsed.format).toBe('html')
+    expect(parsed.id).toBe('alpha/specs/landing.htm')
+    expect(parsed.title).toBe('Landing page')
+    expect(parsed.type).toBe('spec')
+  })
+})

@@ -21,6 +21,7 @@
     "github-slugger": "^2.0.0",
     "gray-matter": "^4.0.3",
     "mdast-util-to-string": "^4.0.0",
+    "parse5": "^8.1.1",
     "picomatch": "^4.0.7",
     "remark-parse": "^11.0.0",
     "unified": "^11.0.5",

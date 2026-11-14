@@ -24,10 +24,13 @@ export interface Edge extends RawRef {
   brokenAnchor: boolean
 }
 
+export type DocFormat = 'markdown' | 'html'
+
 export interface ParsedDoc {
   id: string
   path: string
   absPath: string
+  format: DocFormat
   title: string
   type: string
   status: string

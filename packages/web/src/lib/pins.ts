@@ -1,5 +1,7 @@
 const STORAGE_KEY = 'docstudio:pinned'
 
+export const PINS_STORAGE_KEY = STORAGE_KEY
+
 /**
  * Pinned documents keep their folder order but move above the rest of the
  * folder, so the handful of documents a reader returns to stay within reach.

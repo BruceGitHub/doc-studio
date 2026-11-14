@@ -5,13 +5,17 @@ import { MemoryRouter } from 'react-router-dom'
 import App from '../src/App'
 import { LiveProvider } from '../src/live'
 import { PaletteProvider } from '../src/palette'
+import { PinsProvider } from '../src/pins'
 import { Markdown } from '../src/components/Markdown'
+import { HtmlDocument } from '../src/components/HtmlDocument'
 
 function render(node: ReactNode, path = '/'): string {
   return renderToString(
     <MemoryRouter initialEntries={[path]}>
       <LiveProvider>
-        <PaletteProvider>{node}</PaletteProvider>
+        <PaletteProvider>
+          <PinsProvider>{node}</PinsProvider>
+        </PaletteProvider>
       </LiveProvider>
     </MemoryRouter>,
   )
@@ -59,5 +63,24 @@ describe('web render smoke test', () => {
     expect(html).toContain('href="/doc/alpha/notes/runbook"')
     expect(html).toContain('language-text')
     expect(html).toContain('hljs')
+  })
+
+  it('renders HTML documents with sanitized markup and local links', () => {
+    const html = renderToString(
+      <MemoryRouter>
+        <HtmlDocument
+          sourcePath="alpha/reports/status.html"
+          body={[
+            '<h1 id="report">Report</h1>',
+            '<script>alert(1)</script>',
+            '<p>See <a href="../README.md">the project</a>.</p>',
+          ].join('')}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(html).toContain('id="report"')
+    expect(html).toContain('href="/doc/alpha/README"')
+    expect(html).not.toContain('<script')
   })
 })

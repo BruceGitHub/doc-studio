@@ -5,6 +5,7 @@ import './styles.css'
 import App from './App'
 import { LiveProvider } from './live'
 import { PaletteProvider } from './palette'
+import { PinsProvider } from './pins'
 import { ThemeProvider } from './theme'
 
 const container = document.getElementById('root')
@@ -16,7 +17,9 @@ createRoot(container).render(
       <BrowserRouter>
         <LiveProvider>
           <PaletteProvider>
-            <App />
+            <PinsProvider>
+              <App />
+            </PinsProvider>
           </PaletteProvider>
         </LiveProvider>
       </BrowserRouter>

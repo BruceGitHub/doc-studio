@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { useHistoryKeys } from '../lib/useHistoryKeys'
+import { PinnedBar } from './PinnedBar'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 
@@ -96,6 +97,7 @@ export function Shell() {
           onToggleSidebar={() => setCollapsed((value) => !value)}
         />
         <main className="mx-auto w-full max-w-[1740px] px-3 py-6 lg:pl-4 lg:pr-6">
+          <PinnedBar />
           <Outlet />
         </main>
       </div>

@@ -1,4 +1,5 @@
 import { defaultSchema } from 'rehype-sanitize'
+import type { Options as SanitizeSchema } from 'rehype-sanitize'
 
 /**
  * Extracts the language of a fenced code block from the class list that
@@ -32,7 +33,7 @@ const textAlign = /^text-align:\s*(left|center|right);?$/
  *
  * Scripts, styles, iframes, event handlers and unknown protocols stay blocked.
  */
-export const markdownSchema = {
+export const markdownSchema: SanitizeSchema = {
   ...defaultSchema,
   clobber: [],
   attributes: {
@@ -41,4 +42,32 @@ export const markdownSchema = {
     th: [...(attributes.th ?? []), ['style', textAlign]],
     img: [...(attributes.img ?? []), 'loading'],
   },
+}
+
+const htmlTagNames = [
+  ...(defaultSchema.tagNames ?? []),
+  'address',
+  'article',
+  'aside',
+  'figcaption',
+  'figure',
+  'footer',
+  'header',
+  'hgroup',
+  'main',
+  'mark',
+  'nav',
+  'search',
+  'time',
+  'wbr',
+]
+
+/**
+ * Sanitizer schema for standalone HTML documents. It starts from the markdown
+ * schema and only adds the semantic HTML5 containers that a full page uses.
+ * Scripts, styles, iframes, forms and event handlers remain blocked.
+ */
+export const htmlSchema: SanitizeSchema = {
+  ...markdownSchema,
+  tagNames: [...new Set(htmlTagNames)],
 }

@@ -3,7 +3,8 @@ import { Link, useLocation } from 'react-router-dom'
 import type { DirNodeDTO } from '@docstudio/core'
 import { useApi } from '../lib/useApi'
 import { docHref } from '../lib/paths'
-import { readPins, sortDocsWithPins, writePins } from '../lib/pins'
+import { sortDocsWithPins } from '../lib/pins'
+import { usePins } from '../pins'
 import { StatusDot } from './Badge'
 
 const STORAGE_KEY = 'docstudio:nav-expanded'
@@ -47,7 +48,7 @@ export function NavTree() {
   const { pathname } = useLocation()
   const docId = activeDocId(pathname)
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['']))
-  const [pinned, setPinned] = useState<Set<string>>(readPins)
+  const { pinned, togglePin } = usePins()
   const initialized = useRef(false)
 
   // Restore the last expansion, or open the first directory level on a first
@@ -94,16 +95,6 @@ export function NavTree() {
       const next = new Set(current)
       if (next.has(path)) next.delete(path)
       else next.add(path)
-      return next
-    })
-  }
-
-  const togglePin = (id: string): void => {
-    setPinned((current) => {
-      const next = new Set(current)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      writePins(next)
       return next
     })
   }
