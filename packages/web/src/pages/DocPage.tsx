@@ -112,6 +112,10 @@ export function DocPage() {
     }
   }
 
+  // The right column skips the document title itself: jumping to the h1 the
+  // reader is already looking at adds nothing.
+  const headingLinks = doc.headings.filter((heading) => heading.depth > 1)
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
@@ -193,56 +197,13 @@ export function DocPage() {
               })}
             </nav>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line-soft pt-3.5">
-              <button type="button" onClick={openInEditor} className="btn btn-primary">
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                  <path
-                    d="m6 4-4 4 4 4M10 4l4 4-4 4"
-                    stroke="currentColor"
-                    strokeWidth="1.3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                Open in editor
-              </button>
-              <button type="button" onClick={copyPath} className="btn">
-                {copied ? 'Copied' : 'Copy path'}
-              </button>
-              <div className="ml-auto flex flex-wrap items-center gap-3 text-[11px] text-faint">
-                {owner && <span>owner {owner}</span>}
-                {date && <span>{date}</span>}
-                <span title={absoluteTime(doc.updatedAt)}>
-                  updated {relativeTime(doc.updatedAt)}
-                </span>
-              </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line-soft pt-3.5 text-[11px] text-faint">
+              {owner && <span>owner {owner}</span>}
+              {date && <span>{date}</span>}
+              <span title={absoluteTime(doc.updatedAt)}>
+                updated {relativeTime(doc.updatedAt)}
+              </span>
             </div>
-
-            {openResult && (
-              <div
-                className={`mt-3 rounded-md px-3 py-2 ${
-                  openResult.ok ? 'bg-green/10' : 'bg-red/10'
-                }`}
-              >
-                <p
-                  className={`font-mono text-[10px] ${
-                    openResult.ok ? 'text-green' : 'text-red'
-                  }`}
-                >
-                  {openResult.ok
-                    ? `Opened with: ${openResult.command}`
-                    : `Could not open: ${openResult.message ?? openResult.command}`}
-                </p>
-                {!openResult.ok && openResult.url && (
-                  <a
-                    href={openResult.url}
-                    className="mt-1 inline-flex text-[10px] font-medium text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent"
-                  >
-                    Open with VS Code →
-                  </a>
-                )}
-              </div>
-            )}
           </header>
 
           {issues.length > 0 && (
@@ -290,20 +251,61 @@ export function DocPage() {
         </div>
 
         <aside className="space-y-5 xl:sticky xl:top-[5.5rem] xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pr-1 xl:overscroll-contain">
-          {doc.headings.length > 1 && (
-            <section className="panel p-0">
-              <div className="panel-header">
-                <h2 className="text-[14px] font-semibold tracking-tight text-ink">
-                  On this page
-                </h2>
-                <span className="font-mono text-[10px] text-faint">
-                  {doc.headings.length}
-                </span>
+          <section className="panel p-0">
+            <div className="panel-header">
+              <h2 className="text-[14px] font-semibold tracking-tight text-ink">
+                On this page
+              </h2>
+              <span className="font-mono text-[10px] text-faint">{headingLinks.length}</span>
+            </div>
+            <div className="p-2">
+              <div className="flex items-center gap-1.5 px-1 pb-2">
+                <button type="button" onClick={openInEditor} className="btn btn-primary flex-1 px-2">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="m6 4-4 4 4 4M10 4l4 4-4 4"
+                      stroke="currentColor"
+                      strokeWidth="1.3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Open in editor
+                </button>
+                <button type="button" onClick={copyPath} className="btn flex-1 px-2">
+                  {copied ? 'Copied' : 'Copy path'}
+                </button>
               </div>
-              <nav className="space-y-0.5 p-2">
-                {doc.headings
-                  .filter((heading) => heading.depth > 1)
-                  .map((heading) => (
+
+              {openResult && (
+                <div
+                  className={`mx-1 mb-2 rounded-md px-2.5 py-1.5 ${
+                    openResult.ok ? 'bg-green/10' : 'bg-red/10'
+                  }`}
+                >
+                  <p
+                    className={`font-mono text-[10px] ${
+                      openResult.ok ? 'text-green' : 'text-red'
+                    }`}
+                  >
+                    {openResult.ok
+                      ? `Opened with: ${openResult.command}`
+                      : `Could not open: ${openResult.message ?? openResult.command}`}
+                  </p>
+                  {!openResult.ok && openResult.url && (
+                    <a
+                      href={openResult.url}
+                      className="mt-1 inline-flex text-[10px] font-medium text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent"
+                    >
+                      Open with VS Code →
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {headingLinks.length > 0 ? (
+                <nav className="space-y-0.5 border-t border-line-soft pt-1.5">
+                  {headingLinks.map((heading) => (
                     <a
                       key={`${heading.slug}-${heading.line}`}
                       href={`#${heading.slug}`}
@@ -313,9 +315,14 @@ export function DocPage() {
                       {heading.text}
                     </a>
                   ))}
-              </nav>
-            </section>
-          )}
+                </nav>
+              ) : (
+                <p className="border-t border-line-soft px-2.5 pb-1 pt-2 text-[11px] text-faint">
+                  This document has no sections to jump to.
+                </p>
+              )}
+            </div>
+          </section>
 
           <section className="panel p-0">
             <div className="panel-header">
