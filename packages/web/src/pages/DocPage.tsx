@@ -159,11 +159,13 @@ export function DocPage() {
               {ticket && (
                 <span className="chip border-line bg-raised text-dim">{ticket}</span>
               )}
-              {doc.tags.map((tag) => (
-                <span key={tag} className="chip border-line bg-raised text-faint">
-                  #{tag}
-                </span>
-              ))}
+              {doc.tags
+                .filter((tag) => tag.toLowerCase() !== 'unknown')
+                .map((tag) => (
+                  <span key={tag} className="chip border-line bg-raised text-faint">
+                    #{tag}
+                  </span>
+                ))}
             </div>
 
             <h1 className="mt-3 text-[27px] font-semibold leading-9 tracking-tight text-ink">

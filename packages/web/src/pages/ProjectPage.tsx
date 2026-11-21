@@ -30,7 +30,9 @@ export function ProjectPage() {
   if (!detail.data) return null
 
   const { project: summary, tree, recent, issues, types } = detail.data
-  const typeEntries = Object.entries(types).sort((a, b) => b[1] - a[1])
+  const typeEntries = Object.entries(types)
+    .filter(([type]) => type !== 'unknown')
+    .sort((a, b) => b[1] - a[1])
 
   return (
     <div className="space-y-6">

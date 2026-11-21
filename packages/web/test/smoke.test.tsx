@@ -8,6 +8,7 @@ import { PaletteProvider } from '../src/palette'
 import { PinsProvider } from '../src/pins'
 import { Markdown } from '../src/components/Markdown'
 import { HtmlDocument } from '../src/components/HtmlDocument'
+import { StatusLabel, TypeBadge } from '../src/components/Badge'
 
 function render(node: ReactNode, path = '/'): string {
   return renderToString(
@@ -82,5 +83,12 @@ describe('web render smoke test', () => {
     expect(html).toContain('id="report"')
     expect(html).toContain('href="/doc/alpha/README"')
     expect(html).not.toContain('<script')
+  })
+
+  it('does not render unknown type or status badges', () => {
+    expect(renderToString(<TypeBadge type="unknown" />)).toBe('')
+    expect(renderToString(<StatusLabel status="unknown" />)).toBe('')
+    expect(renderToString(<TypeBadge type="spec" />)).toContain('spec')
+    expect(renderToString(<StatusLabel status="active" />)).toContain('active')
   })
 })

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import type { MetaDTO, ProjectSummaryDTO, SearchHitDTO } from '@docstudio/core'
-import { StatusDot, TypeBadge } from '../components/Badge'
+import { StatusDot, StatusLabel, TypeBadge } from '../components/Badge'
 import { EmptyState, ErrorState, Loading, Spinner } from '../components/States'
 import { relativeTime } from '../lib/format'
 import { useApi } from '../lib/useApi'
@@ -191,9 +191,7 @@ function ResultRow({ hit, tokens }: { hit: SearchHitDTO; tokens: string[] }) {
         <StatusDot status={doc.status} />
         <span className="text-[14px] font-medium text-ink">{doc.title}</span>
         <TypeBadge type={doc.type} />
-        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-faint">
-          {doc.status}
-        </span>
+        <StatusLabel status={doc.status} />
         <span className="ml-auto shrink-0 text-[10px] text-faint">
           {relativeTime(doc.updatedAt)}
         </span>

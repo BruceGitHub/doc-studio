@@ -1,6 +1,7 @@
 import { STATUS_DOT, STATUS_TEXT, TYPE_STYLES } from '../lib/format'
 
 export function TypeBadge({ type }: { type: string }) {
+  if (!type || type === 'unknown') return null
   return (
     <span className={`chip ${TYPE_STYLES[type] ?? TYPE_STYLES.unknown}`}>{type}</span>
   )
@@ -24,6 +25,7 @@ export function StatusDot({
 }
 
 export function StatusLabel({ status }: { status: string }) {
+  if (!status || status === 'unknown') return null
   return (
     <span
       className={`font-mono text-[10px] uppercase tracking-[0.08em] ${

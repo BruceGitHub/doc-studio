@@ -246,6 +246,7 @@ function Stat({
 
 function ProjectCard({ project }: { project: ProjectSummaryDTO }) {
   const topTypes = Object.entries(project.byType)
+    .filter(([type]) => type !== 'unknown')
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4)
 
