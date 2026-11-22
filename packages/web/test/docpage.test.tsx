@@ -99,6 +99,7 @@ describe('document page actions', () => {
     expect(open).toBeGreaterThan(panel)
     expect(copy).toBeGreaterThan(open)
     expect(firstSection).toBeGreaterThan(copy)
+    expect(html).toContain('Close details panel')
   })
 
   it('keeps the actions visible when the document has no sections', () => {

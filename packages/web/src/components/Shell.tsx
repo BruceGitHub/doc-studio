@@ -74,7 +74,7 @@ export function Shell() {
 
   return (
     <div className="min-h-screen">
-      <Sidebar collapsed={collapsed} onExpand={toggleSidebar} />
+      <Sidebar collapsed={collapsed} onExpand={toggleSidebar} onCollapse={toggleSidebar} />
       <div className={collapsed ? 'lg:pl-16' : 'lg:pl-[248px]'}>
         <Topbar
           sidebarCollapsed={collapsed}

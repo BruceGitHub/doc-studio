@@ -7,9 +7,11 @@ import { NavTree } from './NavTree'
 export function Sidebar({
   collapsed,
   onExpand,
+  onCollapse,
 }: {
   collapsed: boolean
   onExpand: () => void
+  onCollapse: () => void
 }) {
   const meta = useApi<MetaDTO>('/meta')
 
@@ -52,10 +54,30 @@ export function Sidebar({
           </svg>
         </button>
         {!collapsed && (
-          <div className="leading-tight">
-            <div className="text-[13px] font-semibold tracking-tight text-ink">Doc Studio</div>
+          <div className="min-w-0 leading-tight">
+            <div className="truncate text-[13px] font-semibold tracking-tight text-ink">
+              Doc Studio
+            </div>
             <div className="text-[10px] text-faint">local read model</div>
           </div>
+        )}
+        {!collapsed && (
+          <button
+            type="button"
+            onClick={onCollapse}
+            className="btn btn-ghost ml-auto h-7 w-7 shrink-0 px-0"
+            aria-label="Close sidebar"
+            title="Close sidebar ([)"
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="m4 4 8 8M12 4l-8 8"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
         )}
       </div>
 

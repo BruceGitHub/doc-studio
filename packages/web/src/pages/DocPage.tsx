@@ -20,7 +20,7 @@ import { useLayout } from '../layout'
 export function DocPage() {
   const params = useParams()
   const location = useLocation()
-  const { asideHidden } = useLayout()
+  const { asideHidden, toggleAside } = useLayout()
   const id = (params['*'] ?? '').replace(/^\/+/, '')
   const detail = useApi<DocDetailDTO>(id ? `/docs/${encodeDocId(id)}` : null)
   const graph = useApi<GraphDTO>(
@@ -260,6 +260,25 @@ export function DocPage() {
 
         {!asideHidden && (
           <aside className="space-y-5 xl:sticky xl:top-[5.5rem] xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pr-1 xl:overscroll-contain">
+            <div className="flex items-center justify-between">
+              <span className="section-label">Details</span>
+              <button
+                type="button"
+                onClick={toggleAside}
+                className="btn btn-ghost h-7 w-7 px-0"
+                aria-label="Close details panel"
+                title="Close details panel (])"
+              >
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path
+                    d="m4 4 8 8M12 4l-8 8"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
             <section className="panel p-0">
               <div className="panel-header">
                 <h2 className="text-[14px] font-semibold tracking-tight text-ink">
