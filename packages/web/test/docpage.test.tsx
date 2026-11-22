@@ -100,6 +100,9 @@ describe('document page actions', () => {
     expect(copy).toBeGreaterThan(open)
     expect(firstSection).toBeGreaterThan(copy)
     expect(html).toContain('Close details panel')
+    expect(html).toContain('href="/dir/alpha"')
+    expect(html).toContain('href="/dir/alpha/specs"')
+    expect(html).toContain('href="/dir"')
   })
 
   it('keeps the actions visible when the document has no sections', () => {

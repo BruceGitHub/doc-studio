@@ -72,6 +72,12 @@ export function docHref(id: string, anchor?: string | null): string {
   return `/doc/${encodeDocId(id)}${anchor ? `#${encodeURIComponent(anchor)}` : ''}`
 }
 
+/** Route of the directory browser for a vault-relative folder path. */
+export function dirHref(path: string): string {
+  const id = normalizePosix(path).replace(/^\/+|\/+$/g, '')
+  return id ? `/dir/${encodeDocId(id)}` : '/dir'
+}
+
 export interface PathCrumb {
   /** File or directory name, including the markdown extension on the leaf. */
   name: string

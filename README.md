@@ -208,6 +208,9 @@ Read the full rules in [docs/references-convention.md](docs/references-conventio
   from frontmatter; it is not a folder rule.
 - **Project** — document tree built from `parent` edges, recent work, project health and
   status mix.
+- **Directory** — every folder in a document's file-path breadcrumb is clickable and opens
+  a browser for that real vault directory: its subfolders, its documents, and an "Up one
+  level" link, all from the same tree the sidebar uses.
 - **Document** — rendered markdown (GFM tables/task lists/footnotes, inline HTML with
   sanitization, fenced code with highlighting, mermaid diagrams), file path breadcrumbs,
   breadcrumb drill-up, child documents drill-down, explicit references, computed backlinks

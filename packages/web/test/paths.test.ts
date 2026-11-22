@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pathCrumbs } from '../src/lib/paths'
+import { dirHref, pathCrumbs } from '../src/lib/paths'
 
 describe('pathCrumbs', () => {
   it('splits a file path into directory crumbs and a leaf', () => {
@@ -22,5 +22,17 @@ describe('pathCrumbs', () => {
       { name: 'runbooks', path: 'ops/runbooks', directory: true },
       { name: 'deploy.md', path: 'ops/runbooks/deploy.md', directory: false },
     ])
+  })
+})
+
+describe('dirHref', () => {
+  it('encodes each segment of the folder path', () => {
+    expect(dirHref('ops/run books')).toBe('/dir/ops/run%20books')
+  })
+
+  it('normalises stray slashes and points the root at /dir', () => {
+    expect(dirHref('/ops//runbooks/')).toBe('/dir/ops/runbooks')
+    expect(dirHref('')).toBe('/dir')
+    expect(dirHref('/')).toBe('/dir')
   })
 })

@@ -14,7 +14,7 @@ import { EmptyState, ErrorState, Loading } from '../components/States'
 import { absoluteTime, ISSUE_HELP, relativeTime } from '../lib/format'
 import { useApi } from '../lib/useApi'
 import { usePageTitle } from '../lib/usePageTitle'
-import { docHref, encodeDocId, pathCrumbs } from '../lib/paths'
+import { docHref, dirHref, encodeDocId, pathCrumbs } from '../lib/paths'
 import { useLayout } from '../layout'
 
 export function DocPage() {
@@ -176,33 +176,27 @@ export function DocPage() {
               aria-label="File path"
               className="mt-2 flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-faint"
             >
-              <Link to="/" className="transition-colors hover:text-ink">
+              <Link to={dirHref('')} className="transition-colors hover:text-ink">
                 vault
               </Link>
-              {pathCrumbs(doc.path).map((crumb) => {
-                const isProjectRoot = crumb.directory && crumb.path === doc.project
-                return (
-                  <span key={crumb.path} className="flex items-center gap-1.5">
-                    <span className="text-line">/</span>
-                    {crumb.directory ? (
-                      isProjectRoot ? (
-                        <Link
-                          to={`/p/${encodeURIComponent(doc.project)}`}
-                          className="transition-colors hover:text-ink"
-                        >
-                          {crumb.name}
-                        </Link>
-                      ) : (
-                        <span title={crumb.path}>{crumb.name}</span>
-                      )
-                    ) : (
-                      <span className="text-ink" aria-current="page">
-                        {crumb.name}
-                      </span>
-                    )}
-                  </span>
-                )
-              })}
+              {pathCrumbs(doc.path).map((crumb) => (
+                <span key={crumb.path} className="flex items-center gap-1.5">
+                  <span className="text-line">/</span>
+                  {crumb.directory ? (
+                    <Link
+                      to={dirHref(crumb.path)}
+                      className="transition-colors hover:text-ink"
+                      title={`Browse ${crumb.path}`}
+                    >
+                      {crumb.name}
+                    </Link>
+                  ) : (
+                    <span className="text-ink" aria-current="page">
+                      {crumb.name}
+                    </span>
+                  )}
+                </span>
+              ))}
             </nav>
 
             <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line-soft pt-3.5 text-[11px] text-faint">
