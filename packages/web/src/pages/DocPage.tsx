@@ -35,9 +35,12 @@ export function DocPage() {
 
   useEffect(() => {
     if (!detail.data) return
-    const docId = detail.data.doc.id
-    if (seenRef.current === docId) return
-    seenRef.current = docId
+    const { id: docId, mtimeMs } = detail.data.doc
+    // The key includes the mtime: when the file changes while the reader has it
+    // open, the new version is marked as seen too, so the unread dot clears.
+    const key = `${docId}@${mtimeMs}`
+    if (seenRef.current === key) return
+    seenRef.current = key
     void post('/seen', { id: docId }).catch(() => undefined)
   }, [detail.data])
 

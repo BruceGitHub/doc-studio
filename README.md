@@ -218,9 +218,10 @@ Read the full rules in [docs/references-convention.md](docs/references-conventio
   issues in a collapsed accordion, and *Open in editor* (deep link to your editor at the
   right file). The right column reads On this page → References → Backlinks → Graph → Drill
   down, and stays fixed while the article scrolls.
-- **Read state** — documents are marked read as you visit them; the top bar has a global
-  "Mark all read" button with the unread count, which clears every current document at
-  once. New documents stay unread.
+- **Read state** — documents are marked read as you visit them; editing a document after
+  it was read makes it unread again. The top bar has a global "Mark all read" button with
+  the unread count, which clears every current document at once. New documents stay
+  unread.
 - **Search** — full-text over titles, headings, paths and body, filtered by project, type
   and status.
 - **Doctor** — grouped structural issues with explanations and jump-to-document links.

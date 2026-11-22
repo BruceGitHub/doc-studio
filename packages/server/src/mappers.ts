@@ -1,6 +1,15 @@
 import type { DocRecord, DocSummaryDTO, Edge, EdgeDTO, Issue, IssueDTO, Vault } from '@docstudio/core'
 import type { StudioState } from './state.js'
 
+/**
+ * A document is unread when it has never been opened, or when the file on disk
+ * changed after the moment it was last marked as seen.
+ */
+export function isUnread(doc: DocRecord, state: StudioState): boolean {
+  const seenAt = Date.parse(state.seen[doc.id] ?? '')
+  return Number.isNaN(seenAt) || doc.mtimeMs > seenAt
+}
+
 export function toSummary(doc: DocRecord, state: StudioState): DocSummaryDTO {
   return {
     id: doc.id,
@@ -12,7 +21,7 @@ export function toSummary(doc: DocRecord, state: StudioState): DocSummaryDTO {
     tags: doc.tags,
     updatedAt: doc.updatedAt,
     mtimeMs: doc.mtimeMs,
-    unread: !state.seen[doc.id],
+    unread: isUnread(doc, state),
   }
 }
 

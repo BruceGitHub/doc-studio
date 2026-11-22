@@ -24,7 +24,7 @@ import {
   type SearchHitDTO,
 } from '@docstudio/core'
 import { openInEditor, editorUrl } from './editor.js'
-import { toEdge, toIssue, toSummary } from './mappers.js'
+import { isUnread, toEdge, toIssue, toSummary } from './mappers.js'
 import { buildNavTree } from './nav.js'
 import { loadState, saveState, type StudioState } from './state.js'
 import { buildProjectTree } from './tree.js'
@@ -79,7 +79,7 @@ export async function createServer(options: CreateServerOptions): Promise<Server
 
   const meta = (): MetaDTO => {
     const stats = vault.stats()
-    const unread = vault.allDocs().filter((doc) => !state.seen[doc.id]).length
+    const unread = vault.allDocs().filter((doc) => isUnread(doc, state)).length
     return {
       root: vault.root,
       name: vault.name,
@@ -223,7 +223,7 @@ export async function createServer(options: CreateServerOptions): Promise<Server
 
     const unread = vault
       .allDocs()
-      .filter((doc) => !state.seen[doc.id])
+      .filter((doc) => isUnread(doc, state))
       .sort((a, b) => b.mtimeMs - a.mtimeMs)
       .slice(0, 12)
       .map((doc) => toSummary(doc, state))

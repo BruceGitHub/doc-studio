@@ -141,6 +141,45 @@ describe('HTTP API', () => {
     expect(visit.json<{ lastVisitAt: string }>().lastVisitAt).toBeTruthy()
   })
 
+  it('makes a read document unread again when the file changes', async () => {
+    const { handle } = await setup()
+
+    await handle.app.inject({
+      method: 'POST',
+      url: '/api/seen',
+      payload: { id: 'alpha/specs/checkout' },
+    })
+
+    const readMeta = await handle.app.inject({ method: 'GET', url: '/api/meta' })
+    expect(readMeta.json<{ counts: { unread: number } }>().counts.unread).toBe(2)
+
+    // Reindexing without touching the file keeps it read.
+    handle.vault.refresh()
+    const stableMeta = await handle.app.inject({ method: 'GET', url: '/api/meta' })
+    expect(stableMeta.json<{ counts: { unread: number } }>().counts.unread).toBe(2)
+
+    vault!.write(
+      'alpha/specs/checkout.md',
+      doc({
+        title: 'Checkout v2',
+        type: 'spec',
+        status: 'active',
+        project: 'alpha',
+        body: 'Three-step checkout.',
+        references: '- `parent`: [Alpha project](../README.md)',
+      }),
+      new Date(Date.now() + 60_000),
+    )
+    handle.vault.refresh()
+
+    const updatedMeta = await handle.app.inject({ method: 'GET', url: '/api/meta' })
+    expect(updatedMeta.json<{ counts: { unread: number } }>().counts.unread).toBe(3)
+
+    const attention = await handle.app.inject({ method: 'GET', url: '/api/attention' })
+    const body = attention.json<{ unread: Array<{ id: string }> }>()
+    expect(body.unread.some((entry) => entry.id === 'alpha/specs/checkout')).toBe(true)
+  })
+
   it('returns graph data around a focus document', async () => {
     const { handle } = await setup()
 
