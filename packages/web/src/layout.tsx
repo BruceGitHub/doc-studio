@@ -11,21 +11,61 @@ import { isTypingTarget } from './lib/keyboard'
 
 const SIDEBAR_KEY = 'docstudio:sidebar'
 const ASIDE_KEY = 'docstudio:aside'
+const SIDEBAR_WIDTH_KEY = 'docstudio:sidebar-width'
+const ASIDE_WIDTH_KEY = 'docstudio:aside-width'
+
+export const SIDEBAR_WIDTH_DEFAULT = 248
+export const SIDEBAR_WIDTH_MIN = 200
+export const SIDEBAR_WIDTH_MAX = 360
+export const ASIDE_WIDTH_DEFAULT = 340
+export const ASIDE_WIDTH_MIN = 280
+export const ASIDE_WIDTH_MAX = 480
 
 export interface LayoutValue {
   sidebarCollapsed: boolean
   toggleSidebar: () => void
+  /** Width of the expanded left sidebar, in pixels. */
+  sidebarWidth: number
+  setSidebarWidth: (width: number) => void
   /** Hides the right-hand details column to give the article the full width. */
   asideHidden: boolean
   toggleAside: () => void
+  /** Width of the right-hand details column, in pixels. */
+  asideWidth: number
+  setAsideWidth: (width: number) => void
 }
 
 export const LayoutContext = createContext<LayoutValue>({
   sidebarCollapsed: false,
   toggleSidebar: () => {},
+  sidebarWidth: SIDEBAR_WIDTH_DEFAULT,
+  setSidebarWidth: () => {},
   asideHidden: false,
   toggleAside: () => {},
+  asideWidth: ASIDE_WIDTH_DEFAULT,
+  setAsideWidth: () => {},
 })
+
+function clampWidth(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, Math.round(value)))
+}
+
+function readWidth(
+  key: string,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  if (typeof window === 'undefined') return fallback
+  try {
+    const raw = window.localStorage.getItem(key)
+    if (raw === null) return fallback
+    const parsed = Number(raw)
+    return Number.isFinite(parsed) ? clampWidth(parsed, min, max) : fallback
+  } catch {
+    return fallback
+  }
+}
 
 function readFlag(key: string, enabled: string): boolean {
   if (typeof window === 'undefined') return false
@@ -56,6 +96,17 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
     readFlag(SIDEBAR_KEY, 'collapsed'),
   )
   const [asideHidden, setAsideHidden] = useState(() => readFlag(ASIDE_KEY, 'hidden'))
+  const [sidebarWidth, setSidebarWidthValue] = useState(() =>
+    readWidth(
+      SIDEBAR_WIDTH_KEY,
+      SIDEBAR_WIDTH_DEFAULT,
+      SIDEBAR_WIDTH_MIN,
+      SIDEBAR_WIDTH_MAX,
+    ),
+  )
+  const [asideWidth, setAsideWidthValue] = useState(() =>
+    readWidth(ASIDE_WIDTH_KEY, ASIDE_WIDTH_DEFAULT, ASIDE_WIDTH_MIN, ASIDE_WIDTH_MAX),
+  )
 
   useEffect(() => {
     writeFlag(SIDEBAR_KEY, sidebarCollapsed ? 'collapsed' : 'open')
@@ -65,8 +116,29 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
     writeFlag(ASIDE_KEY, asideHidden ? 'hidden' : 'open')
   }, [asideHidden])
 
+  // Widths change on every pointer move during a drag: persist them once the
+  // gesture pauses instead of hammering localStorage.
+  useEffect(() => {
+    const timer = window.setTimeout(() => writeFlag(SIDEBAR_WIDTH_KEY, String(sidebarWidth)), 200)
+    return () => window.clearTimeout(timer)
+  }, [sidebarWidth])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => writeFlag(ASIDE_WIDTH_KEY, String(asideWidth)), 200)
+    return () => window.clearTimeout(timer)
+  }, [asideWidth])
+
   const toggleSidebar = useCallback(() => setSidebarCollapsed((value) => !value), [])
   const toggleAside = useCallback(() => setAsideHidden((value) => !value), [])
+  const setSidebarWidth = useCallback(
+    (width: number) =>
+      setSidebarWidthValue(clampWidth(width, SIDEBAR_WIDTH_MIN, SIDEBAR_WIDTH_MAX)),
+    [],
+  )
+  const setAsideWidth = useCallback(
+    (width: number) => setAsideWidthValue(clampWidth(width, ASIDE_WIDTH_MIN, ASIDE_WIDTH_MAX)),
+    [],
+  )
 
   useEffect(() => {
     const handler = (event: KeyboardEvent): void => {
@@ -91,8 +163,26 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<LayoutValue>(
-    () => ({ sidebarCollapsed, toggleSidebar, asideHidden, toggleAside }),
-    [asideHidden, sidebarCollapsed, toggleAside, toggleSidebar],
+    () => ({
+      sidebarCollapsed,
+      toggleSidebar,
+      sidebarWidth,
+      setSidebarWidth,
+      asideHidden,
+      toggleAside,
+      asideWidth,
+      setAsideWidth,
+    }),
+    [
+      asideHidden,
+      asideWidth,
+      setAsideWidth,
+      setSidebarWidth,
+      sidebarCollapsed,
+      sidebarWidth,
+      toggleAside,
+      toggleSidebar,
+    ],
   )
 
   return <LayoutContext.Provider value={value}>{children}</LayoutContext.Provider>

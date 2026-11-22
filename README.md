@@ -211,6 +211,9 @@ Read the full rules in [docs/references-convention.md](docs/references-conventio
 - **Directory** — every folder in a document's file-path breadcrumb is clickable and opens
   a browser for that real vault directory: its subfolders, its documents, and an "Up one
   level" link, all from the same tree the sidebar uses.
+- **Resizable columns** — drag the inner edge of the sidebar or of the details panel to
+  change its width; the arrow keys work while the handle has focus, and both widths are
+  remembered per browser in `localStorage`.
 - **Document** — rendered markdown (GFM tables/task lists/footnotes, inline HTML with
   sanitization, fenced code with highlighting, mermaid diagrams), file path breadcrumbs,
   breadcrumb drill-up, child documents drill-down, explicit references, computed backlinks

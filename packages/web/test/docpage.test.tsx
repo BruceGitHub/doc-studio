@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { renderToString } from 'react-dom/server'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { PinsProvider } from '../src/pins'
-import { LayoutContext } from '../src/layout'
+import { ASIDE_WIDTH_DEFAULT, LayoutContext, SIDEBAR_WIDTH_DEFAULT } from '../src/layout'
 
 /**
  * DocPage loads through useApi. Render-to-string never runs effects, so the
@@ -103,6 +103,8 @@ describe('document page actions', () => {
     expect(html).toContain('href="/dir/alpha"')
     expect(html).toContain('href="/dir/alpha/specs"')
     expect(html).toContain('href="/dir"')
+    expect(html).toContain('Resize details panel')
+    expect(html).toContain('--aside-width:340px')
   })
 
   it('keeps the actions visible when the document has no sections', () => {
@@ -121,8 +123,12 @@ describe('document page actions', () => {
           value={{
             sidebarCollapsed: true,
             toggleSidebar: () => {},
+            sidebarWidth: SIDEBAR_WIDTH_DEFAULT,
+            setSidebarWidth: () => {},
             asideHidden: true,
             toggleAside: () => {},
+            asideWidth: ASIDE_WIDTH_DEFAULT,
+            setAsideWidth: () => {},
           }}
         >
           <PinsProvider>

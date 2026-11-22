@@ -168,6 +168,12 @@ html[data-theme='light'] {
     cursor: pointer;
   }
 
+  /* Dragging a column divider must resize in real time: freeze the width
+     transition while the pointer is captured. */
+  html[data-resizing] .sidebar-shell {
+    transition: none;
+  }
+
   :focus-visible {
     outline: 2px solid color-mix(in oklab, var(--color-accent) 55%, transparent);
     outline-offset: 2px;

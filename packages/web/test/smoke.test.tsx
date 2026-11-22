@@ -31,6 +31,7 @@ describe('web render smoke test', () => {
     expect(html).toContain('Changed recently')
     expect(html).toContain('Vault conventions')
     expect(html).toContain('Close sidebar')
+    expect(html).toContain('Resize sidebar')
   })
 
   it('renders the doctor and search views', () => {

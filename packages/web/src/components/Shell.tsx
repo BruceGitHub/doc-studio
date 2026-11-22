@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, type CSSProperties } from 'react'
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { useLayout } from '../layout'
 import { useHistoryKeys } from '../lib/useHistoryKeys'
@@ -22,7 +22,14 @@ export function Shell() {
   const location = useLocation()
   const navigationType = useNavigationType()
   const latestScroll = useRef(0)
-  const { sidebarCollapsed: collapsed, toggleSidebar, asideHidden, toggleAside } = useLayout()
+  const {
+    sidebarCollapsed: collapsed,
+    sidebarWidth,
+    toggleSidebar,
+    setSidebarWidth,
+    asideHidden,
+    toggleAside,
+  } = useLayout()
 
   useHistoryKeys()
 
@@ -74,8 +81,21 @@ export function Shell() {
 
   return (
     <div className="min-h-screen">
-      <Sidebar collapsed={collapsed} onExpand={toggleSidebar} onCollapse={toggleSidebar} />
-      <div className={collapsed ? 'lg:pl-16' : 'lg:pl-[248px]'}>
+      <Sidebar
+        collapsed={collapsed}
+        width={sidebarWidth}
+        onExpand={toggleSidebar}
+        onCollapse={toggleSidebar}
+        onResize={setSidebarWidth}
+      />
+      <div
+        className={collapsed ? 'lg:pl-16' : 'lg:pl-[var(--sidebar-width)]'}
+        style={
+          collapsed
+            ? undefined
+            : ({ '--sidebar-width': `${sidebarWidth}px` } as CSSProperties)
+        }
+      >
         <Topbar
           sidebarCollapsed={collapsed}
           onToggleSidebar={toggleSidebar}
