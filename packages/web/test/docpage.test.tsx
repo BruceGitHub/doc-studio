@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { renderToString } from 'react-dom/server'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { PinsProvider } from '../src/pins'
+import { TopbarActionsProvider } from '../src/components/TopbarActions'
 import { ASIDE_WIDTH_DEFAULT, LayoutContext, SIDEBAR_WIDTH_DEFAULT } from '../src/layout'
 
 /**
@@ -78,27 +79,25 @@ function renderPage(path: string): string {
   return renderToString(
     <MemoryRouter initialEntries={[path]}>
       <PinsProvider>
-        <Routes>
-          <Route path="/doc/*" element={<DocPage />} />
-        </Routes>
+        <TopbarActionsProvider>
+          <Routes>
+            <Route path="/doc/*" element={<DocPage />} />
+          </Routes>
+        </TopbarActionsProvider>
       </PinsProvider>
     </MemoryRouter>,
   )
 }
 
-describe('document page actions', () => {
-  it('renders open/copy at the top of "On this page", above the section links', () => {
+describe('document page layout', () => {
+  it('renders the "On this page" panel with the section links', () => {
     const html = renderPage('/doc/alpha/specs/checkout')
 
     const panel = html.indexOf('On this page')
-    const open = html.indexOf('Open in editor')
-    const copy = html.indexOf('Copy path')
     const firstSection = html.indexOf('href="#details"')
 
     expect(panel).toBeGreaterThanOrEqual(0)
-    expect(open).toBeGreaterThan(panel)
-    expect(copy).toBeGreaterThan(open)
-    expect(firstSection).toBeGreaterThan(copy)
+    expect(firstSection).toBeGreaterThan(panel)
     expect(html).toContain('Close details panel')
     expect(html).toContain('href="/dir/alpha"')
     expect(html).toContain('href="/dir/alpha/specs"')
@@ -107,13 +106,11 @@ describe('document page actions', () => {
     expect(html).toContain('--aside-width:340px')
   })
 
-  it('keeps the actions visible when the document has no sections', () => {
+  it('keeps the details panel when the document has no sections', () => {
     const html = renderPage('/doc/alpha/empty')
 
     expect(html).toContain('On this page')
     expect(html).toContain('no sections to jump to')
-    expect(html).toContain('Open in editor')
-    expect(html).toContain('Copy path')
   })
 
   it('drops the details column when the layout hides it', () => {
@@ -132,16 +129,17 @@ describe('document page actions', () => {
           }}
         >
           <PinsProvider>
-            <Routes>
-              <Route path="/doc/*" element={<DocPage />} />
-            </Routes>
+            <TopbarActionsProvider>
+              <Routes>
+                <Route path="/doc/*" element={<DocPage />} />
+              </Routes>
+            </TopbarActionsProvider>
           </PinsProvider>
         </LayoutContext.Provider>
       </MemoryRouter>,
     )
 
     expect(html).not.toContain('On this page')
-    expect(html).not.toContain('Copy path')
     expect(html).toContain('xl:grid-cols-1')
   })
 })

@@ -5,6 +5,7 @@ import { useHistoryKeys } from '../lib/useHistoryKeys'
 import { PinnedBar } from './PinnedBar'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
+import { TopbarActionsProvider } from './TopbarActions'
 
 const scrollPositions = new Map<string, number>()
 const RESTORE_FRAMES = 40
@@ -80,33 +81,35 @@ export function Shell() {
   }, [location.key, navigationType])
 
   return (
-    <div className="min-h-screen">
-      <Sidebar
-        collapsed={collapsed}
-        width={sidebarWidth}
-        onExpand={toggleSidebar}
-        onCollapse={toggleSidebar}
-        onResize={setSidebarWidth}
-      />
-      <div
-        className={collapsed ? 'lg:pl-16' : 'lg:pl-[var(--sidebar-width)]'}
-        style={
-          collapsed
-            ? undefined
-            : ({ '--sidebar-width': `${sidebarWidth}px` } as CSSProperties)
-        }
-      >
-        <Topbar
-          sidebarCollapsed={collapsed}
-          onToggleSidebar={toggleSidebar}
-          asideHidden={asideHidden}
-          onToggleAside={toggleAside}
+    <TopbarActionsProvider>
+      <div className="min-h-screen">
+        <Sidebar
+          collapsed={collapsed}
+          width={sidebarWidth}
+          onExpand={toggleSidebar}
+          onCollapse={toggleSidebar}
+          onResize={setSidebarWidth}
         />
-        <main className="mx-auto w-full max-w-[1740px] px-3 py-6 lg:pl-4 lg:pr-6">
-          <PinnedBar />
-          <Outlet />
-        </main>
+        <div
+          className={collapsed ? 'lg:pl-16' : 'lg:pl-[var(--sidebar-width)]'}
+          style={
+            collapsed
+              ? undefined
+              : ({ '--sidebar-width': `${sidebarWidth}px` } as CSSProperties)
+          }
+        >
+          <Topbar
+            sidebarCollapsed={collapsed}
+            onToggleSidebar={toggleSidebar}
+            asideHidden={asideHidden}
+            onToggleAside={toggleAside}
+          />
+          <main className="mx-auto w-full max-w-[1740px] px-3 py-6 lg:pl-4 lg:pr-6">
+            <PinnedBar />
+            <Outlet />
+          </main>
+        </div>
       </div>
-    </div>
+    </TopbarActionsProvider>
   )
 }

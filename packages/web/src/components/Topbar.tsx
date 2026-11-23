@@ -6,17 +6,20 @@ import { useApi } from '../lib/useApi'
 import { usePalette } from '../palette'
 import { useTheme } from '../theme'
 import { LiveIndicator } from './LiveIndicator'
+import { useTopbarActions, type TopbarActions } from './TopbarActions'
 
 export function Topbar({
   sidebarCollapsed,
   onToggleSidebar,
   asideHidden,
   onToggleAside,
+  actions: actionsProp,
 }: {
   sidebarCollapsed: boolean
   onToggleSidebar: () => void
   asideHidden: boolean
   onToggleAside: () => void
+  actions?: TopbarActions
 }) {
   const palette = usePalette()
   const navigate = useNavigate()
@@ -25,6 +28,8 @@ export function Topbar({
   const [marking, setMarking] = useState(false)
   const nextTheme = theme.theme === 'dark' ? 'light' : 'dark'
   const unread = meta.data?.counts.unread ?? 0
+  const ctxActions = useTopbarActions()
+  const actions = actionsProp ?? ctxActions
 
   const markAllRead = async (): Promise<void> => {
     if (marking || unread === 0) return
@@ -176,6 +181,86 @@ export function Topbar({
         <Link to="/doctor" className="btn btn-ghost hidden sm:inline-flex">
           Health
         </Link>
+
+        {actions.docPath && actions.onOpen && (
+          <button
+            type="button"
+            onClick={actions.onOpen}
+            className="btn btn-primary hidden sm:inline-flex"
+            title="Open in editor"
+            aria-label="Open in editor"
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <path
+                d="m6 4-4 4 4 4M10 4l4 4-4 4"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span className="hidden md:inline">{actions.openLabel}</span>
+          </button>
+        )}
+
+        {actions.docPath && actions.onCopy && (
+          <button
+            type="button"
+            onClick={actions.onCopy}
+            className="btn hidden sm:inline-flex"
+            title={actions.docPath}
+            aria-label="Copy path"
+          >
+            <span className="hidden md:inline">{actions.copyLabel}</span>
+            {actions.copied && (
+              <span className="ml-1 rounded bg-green/15 px-1.5 py-0.5 font-mono text-[9px] text-green">
+                Copied
+              </span>
+            )}
+          </button>
+        )}
+
+        {actions.openResult && (
+          <div
+            className={`hidden sm:inline-flex items-center gap-1.5 mx-2 rounded-md px-2.5 py-1.5 ${
+              actions.openResult.ok ? 'bg-green/10' : 'bg-red/10'
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              {actions.openResult.ok ? (
+                <path
+                  d="m4.5 8 3 3 5.5-5.5"
+                  stroke={actions.openResult.ok ? 'currentColor' : 'none'}
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              ) : (
+                <path
+                  d="m4 4 8 8M12 4l-8 8"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              )}
+            </svg>
+            <span className={`font-mono text-[10px] ${actions.openResult.ok ? 'text-green' : 'text-red'}`}>
+              {actions.openResult.ok
+                ? `Opened with: ${actions.openResult.command}`
+                : `Could not open: ${actions.openResult.message ?? actions.openResult.command}`}
+            </span>
+            {!actions.openResult.ok && actions.openResult.url && (
+              <a
+                href={actions.openResult.url}
+                className="ml-1 text-[10px] font-medium text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent"
+              >
+                Open with VS Code →
+              </a>
+            )}
+          </div>
+        )}
 
         <button
           type="button"

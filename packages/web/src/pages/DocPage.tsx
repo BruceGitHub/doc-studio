@@ -1,7 +1,12 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, useCallback, type CSSProperties } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import type { DocDetailDTO, GraphDTO, OpenResultDTO } from '@docstudio/core'
 import { post } from '../api'
+import {
+  EMPTY,
+  useTopbarActionsSet,
+  type TopbarActions,
+} from '../components/TopbarActions'
 import { Markdown } from '../components/Markdown'
 import { HtmlDocument } from '../components/HtmlDocument'
 import { DocRow } from '../components/DocRow'
@@ -28,9 +33,10 @@ export function DocPage() {
     detail.data ? `/graph?focus=${encodeURIComponent(detail.data.doc.id)}` : null,
   )
   const seenRef = useRef<string | null>(null)
-  const [openResult, setOpenResult] = useState<OpenResultDTO | null>(null)
-  const [copied, setCopied] = useState(false)
   const [graphOpen, setGraphOpen] = useState(false)
+  const setActions = useTopbarActionsSet()
+  const actionsRef = useRef<TopbarActions>(EMPTY)
+  const timersRef = useRef<number[]>([])
 
   usePageTitle(detail.data?.doc.title)
 
@@ -64,6 +70,81 @@ export function DocPage() {
     return undefined
   }, [detail.data, location.hash])
 
+  const activeDoc = detail.data?.doc
+
+  const publishActions = useCallback(
+    (patch: Partial<TopbarActions>) => {
+      const next = { ...actionsRef.current, ...patch }
+      actionsRef.current = next
+      setActions(next)
+    },
+    [setActions],
+  )
+
+  const scheduleClear = useCallback(
+    (patch: Partial<TopbarActions>, delay: number) => {
+      const timer = window.setTimeout(() => publishActions(patch), delay)
+      timersRef.current.push(timer)
+    },
+    [publishActions],
+  )
+
+  const openInEditor = useCallback(async (): Promise<void> => {
+    if (!activeDoc) return
+    try {
+      const result = await post<OpenResultDTO>('/open', { id: activeDoc.id })
+      publishActions({ openResult: result })
+      // In a container the server cannot spawn the host editor. The response
+      // carries a vscode:// (or equivalent) URL that the browser can launch.
+      if (!result.ok && result.url) {
+        window.location.assign(result.url)
+      }
+    } catch (error) {
+      publishActions({
+        openResult: {
+          ok: false,
+          command: 'open',
+          message: error instanceof Error ? error.message : String(error),
+        },
+      })
+    }
+    scheduleClear({ openResult: null }, 6000)
+  }, [activeDoc, publishActions, scheduleClear])
+
+  const copyPath = useCallback(async (): Promise<void> => {
+    if (!activeDoc) return
+    try {
+      await navigator.clipboard.writeText(activeDoc.path)
+      publishActions({ copied: true })
+      scheduleClear({ copied: false }, 1800)
+    } catch {
+      publishActions({ copied: false })
+    }
+  }, [activeDoc, publishActions, scheduleClear])
+
+  // Publish the actions as soon as the document is available and tear them
+  // down when the page unmounts, so the top bar only shows them on doc pages.
+  useEffect(() => {
+    if (!activeDoc) return
+    const actions: TopbarActions = {
+      docPath: activeDoc.path,
+      openLabel: 'Open in editor',
+      onOpen: () => void openInEditor(),
+      copyLabel: 'Copy path',
+      copied: false,
+      onCopy: () => void copyPath(),
+      openResult: null,
+    }
+    actionsRef.current = actions
+    setActions(actions)
+    return () => {
+      for (const timer of timersRef.current) window.clearTimeout(timer)
+      timersRef.current = []
+      actionsRef.current = EMPTY
+      setActions(EMPTY)
+    }
+  }, [activeDoc, setActions, openInEditor, copyPath])
+
   if (detail.loading && !detail.data) return <Loading label="Loading document…" />
   if (detail.error) {
     return (
@@ -82,41 +163,16 @@ export function DocPage() {
   }
   if (!detail.data) return null
 
-  const { doc, breadcrumb, children, outgoing, backlinks, issues } = detail.data
+  const doc = detail.data.doc
+  const breadcrumb = detail.data.breadcrumb
+  const children = detail.data.children
+  const outgoing = detail.data.outgoing
+  const backlinks = detail.data.backlinks
+  const issues = detail.data.issues
   const frontmatter = doc.frontmatter
   const owner = frontmatterString(frontmatter, 'owner')
   const date = frontmatterString(frontmatter, 'date') ?? frontmatterString(frontmatter, 'updated')
   const ticket = frontmatterString(frontmatter, 'ticket')
-
-  const openInEditor = async (): Promise<void> => {
-    try {
-      const result = await post<OpenResultDTO>('/open', { id: doc.id })
-      setOpenResult(result)
-      // In a container the server cannot spawn the host editor. The response
-      // carries a vscode:// (or equivalent) URL that the browser can launch.
-      if (!result.ok && result.url) {
-        window.location.assign(result.url)
-      }
-      window.setTimeout(() => setOpenResult(null), 6000)
-    } catch (error) {
-      setOpenResult({
-        ok: false,
-        command: 'open',
-        message: error instanceof Error ? error.message : String(error),
-      })
-      window.setTimeout(() => setOpenResult(null), 6000)
-    }
-  }
-
-  const copyPath = async (): Promise<void> => {
-    try {
-      await navigator.clipboard.writeText(doc.path)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 1800)
-    } catch {
-      setCopied(false)
-    }
-  }
 
   // The right column skips the document title itself: jumping to the h1 the
   // reader is already looking at adds nothing.
@@ -293,50 +349,6 @@ export function DocPage() {
                   <span className="font-mono text-[10px] text-faint">{headingLinks.length}</span>
                 </div>
                 <div className="p-2">
-                  <div className="flex items-center gap-1.5 px-1 pb-2">
-                    <button type="button" onClick={openInEditor} className="btn btn-primary flex-1 px-2">
-                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                        <path
-                          d="m6 4-4 4 4 4M10 4l4 4-4 4"
-                          stroke="currentColor"
-                          strokeWidth="1.3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      Open in editor
-                    </button>
-                    <button type="button" onClick={copyPath} className="btn flex-1 px-2">
-                      {copied ? 'Copied' : 'Copy path'}
-                    </button>
-                  </div>
-
-                  {openResult && (
-                    <div
-                      className={`mx-1 mb-2 rounded-md px-2.5 py-1.5 ${
-                        openResult.ok ? 'bg-green/10' : 'bg-red/10'
-                      }`}
-                    >
-                      <p
-                        className={`font-mono text-[10px] ${
-                          openResult.ok ? 'text-green' : 'text-red'
-                        }`}
-                      >
-                        {openResult.ok
-                          ? `Opened with: ${openResult.command}`
-                          : `Could not open: ${openResult.message ?? openResult.command}`}
-                      </p>
-                      {!openResult.ok && openResult.url && (
-                        <a
-                          href={openResult.url}
-                          className="mt-1 inline-flex text-[10px] font-medium text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent"
-                        >
-                          Open with VS Code →
-                        </a>
-                      )}
-                    </div>
-                  )}
-
                   {headingLinks.length > 0 ? (
                     <nav className="space-y-0.5 border-t border-line-soft pt-1.5">
                       {headingLinks.map((heading) => (
