@@ -21,7 +21,7 @@ import { absoluteTime, ISSUE_HELP, relativeTime } from '../lib/format'
 import { useApi } from '../lib/useApi'
 import { usePageTitle } from '../lib/usePageTitle'
 import { docHref, dirHref, encodeDocId, pathCrumbs } from '../lib/paths'
-import { ASIDE_WIDTH_MAX, ASIDE_WIDTH_MIN, useLayout } from '../layout'
+import { useLayout } from '../layout'
 
 export function DocPage() {
   const params = useParams()
@@ -461,8 +461,6 @@ export function DocPage() {
               label="Resize details panel"
               edge="right"
               value={asideWidth}
-              min={ASIDE_WIDTH_MIN}
-              max={ASIDE_WIDTH_MAX}
               onResize={setAsideWidth}
               className="absolute inset-y-0 -left-3 z-10 hidden w-1.5 xl:block"
             />

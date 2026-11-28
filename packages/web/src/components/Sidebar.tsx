@@ -1,7 +1,6 @@
 import { type CSSProperties } from 'react'
 import { NavLink } from 'react-router-dom'
 import type { MetaDTO } from '@docstudio/core'
-import { SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from '../layout'
 import { useApi } from '../lib/useApi'
 import { LiveIndicator } from './LiveIndicator'
 import { NavTree } from './NavTree'
@@ -27,7 +26,7 @@ export function Sidebar({
 
   return (
     <aside
-      className={`sidebar-shell fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-line bg-surface/60 backdrop-blur-xl transition-[width] duration-200 lg:flex ${
+      className={`sidebar-shell fixed inset-y-0 left-0 z-30 hidden flex-col overflow-hidden border-r border-line bg-surface/60 backdrop-blur-xl transition-[width] duration-200 lg:flex ${
         collapsed ? 'w-16' : 'w-[var(--sidebar-width)]'
       }`}
       style={
@@ -195,10 +194,8 @@ export function Sidebar({
           label="Resize sidebar"
           edge="left"
           value={width}
-          min={SIDEBAR_WIDTH_MIN}
-          max={SIDEBAR_WIDTH_MAX}
           onResize={onResize}
-          className="absolute inset-y-0 right-0 z-20 hidden w-1.5 translate-x-1/2 lg:block"
+          className="absolute inset-y-0 right-0 z-20 hidden w-1.5 lg:block"
         />
       )}
     </aside>

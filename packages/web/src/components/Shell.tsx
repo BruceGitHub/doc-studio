@@ -91,7 +91,9 @@ export function Shell() {
           onResize={setSidebarWidth}
         />
         <div
-          className={collapsed ? 'lg:pl-16' : 'lg:pl-[var(--sidebar-width)]'}
+          className={`shell-main transition-[padding] duration-200 ${
+            collapsed ? 'lg:pl-16' : 'lg:pl-[var(--sidebar-width)]'
+          }`}
           style={
             collapsed
               ? undefined

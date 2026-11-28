@@ -32,6 +32,9 @@ describe('web render smoke test', () => {
     expect(html).toContain('Vault conventions')
     expect(html).toContain('Close sidebar')
     expect(html).toContain('Resize sidebar')
+    // Sidebar width and content padding must animate together, otherwise the
+    // fixed sidebar briefly covers the article while collapsing/expanding.
+    expect(html).toContain('shell-main transition-[padding] duration-200')
   })
 
   it('renders the doctor and search views', () => {

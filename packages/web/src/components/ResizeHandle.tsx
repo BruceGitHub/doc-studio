@@ -12,19 +12,17 @@ export function ResizeHandle({
   label,
   edge,
   value,
-  min,
-  max,
   onResize,
   className = '',
 }: {
   label: string
   edge: 'left' | 'right'
   value: number
-  min: number
-  max: number
   onResize: (width: number) => void
   className?: string
 }) {
+  // Negative widths are not valid CSS; there is no configurable min or max.
+  const pixels = (width: number): number => Math.max(0, Math.round(width))
   const start = useRef<{ x: number; width: number } | null>(null)
 
   const finish = (event: PointerEvent<HTMLDivElement>): void => {
@@ -41,7 +39,7 @@ export function ResizeHandle({
     event.preventDefault()
     const step = event.shiftKey ? 64 : 16
     const grow = event.key === (edge === 'left' ? 'ArrowRight' : 'ArrowLeft')
-    const next = Math.min(max, Math.max(min, value + (grow ? step : -step)))
+    const next = pixels(value + (grow ? step : -step))
     onResize(next)
   }
 
@@ -51,8 +49,7 @@ export function ResizeHandle({
       aria-orientation="vertical"
       aria-label={label}
       aria-valuenow={Math.round(value)}
-      aria-valuemin={min}
-      aria-valuemax={max}
+      aria-valuetext={`${Math.round(value)} px`}
       tabIndex={0}
       title={`${label}: drag, or use the arrow keys`}
       onPointerDown={(event) => {
@@ -66,7 +63,7 @@ export function ResizeHandle({
         if (!start.current) return
         const delta = event.clientX - start.current.x
         const raw = start.current.width + (edge === 'left' ? delta : -delta)
-        onResize(Math.min(max, Math.max(min, Math.round(raw))))
+        onResize(pixels(raw))
       }}
       onPointerUp={finish}
       onPointerCancel={finish}

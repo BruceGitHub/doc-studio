@@ -104,6 +104,10 @@ describe('document page layout', () => {
     expect(html).toContain('href="/dir"')
     expect(html).toContain('Resize details panel')
     expect(html).toContain('--aside-width:340px')
+    // The divider follows the pointer: no min/max bounds are declared.
+    expect(html).not.toContain('aria-valuemin')
+    expect(html).not.toContain('aria-valuemax')
+    expect(html).toContain('aria-valuetext="340 px"')
   })
 
   it('keeps the details panel when the document has no sections', () => {

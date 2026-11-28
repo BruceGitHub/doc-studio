@@ -15,11 +15,7 @@ const SIDEBAR_WIDTH_KEY = 'docstudio:sidebar-width'
 const ASIDE_WIDTH_KEY = 'docstudio:aside-width'
 
 export const SIDEBAR_WIDTH_DEFAULT = 248
-export const SIDEBAR_WIDTH_MIN = 200
-export const SIDEBAR_WIDTH_MAX = 360
 export const ASIDE_WIDTH_DEFAULT = 340
-export const ASIDE_WIDTH_MIN = 280
-export const ASIDE_WIDTH_MAX = 480
 
 export interface LayoutValue {
   sidebarCollapsed: boolean
@@ -46,22 +42,18 @@ export const LayoutContext = createContext<LayoutValue>({
   setAsideWidth: () => {},
 })
 
-function clampWidth(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, Math.round(value)))
+/** Widths follow the pointer: no fixed cap, just a sane, finite pixel value. */
+function normalizeWidth(value: number, fallback: number): number {
+  return Number.isFinite(value) ? Math.max(0, Math.round(value)) : fallback
 }
 
-function readWidth(
-  key: string,
-  fallback: number,
-  min: number,
-  max: number,
-): number {
+function readWidth(key: string, fallback: number): number {
   if (typeof window === 'undefined') return fallback
   try {
     const raw = window.localStorage.getItem(key)
     if (raw === null) return fallback
     const parsed = Number(raw)
-    return Number.isFinite(parsed) ? clampWidth(parsed, min, max) : fallback
+    return Number.isFinite(parsed) ? normalizeWidth(parsed, fallback) : fallback
   } catch {
     return fallback
   }
@@ -97,15 +89,10 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   )
   const [asideHidden, setAsideHidden] = useState(() => readFlag(ASIDE_KEY, 'hidden'))
   const [sidebarWidth, setSidebarWidthValue] = useState(() =>
-    readWidth(
-      SIDEBAR_WIDTH_KEY,
-      SIDEBAR_WIDTH_DEFAULT,
-      SIDEBAR_WIDTH_MIN,
-      SIDEBAR_WIDTH_MAX,
-    ),
+    readWidth(SIDEBAR_WIDTH_KEY, SIDEBAR_WIDTH_DEFAULT),
   )
   const [asideWidth, setAsideWidthValue] = useState(() =>
-    readWidth(ASIDE_WIDTH_KEY, ASIDE_WIDTH_DEFAULT, ASIDE_WIDTH_MIN, ASIDE_WIDTH_MAX),
+    readWidth(ASIDE_WIDTH_KEY, ASIDE_WIDTH_DEFAULT),
   )
 
   useEffect(() => {
@@ -131,12 +118,11 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   const toggleSidebar = useCallback(() => setSidebarCollapsed((value) => !value), [])
   const toggleAside = useCallback(() => setAsideHidden((value) => !value), [])
   const setSidebarWidth = useCallback(
-    (width: number) =>
-      setSidebarWidthValue(clampWidth(width, SIDEBAR_WIDTH_MIN, SIDEBAR_WIDTH_MAX)),
+    (width: number) => setSidebarWidthValue(normalizeWidth(width, SIDEBAR_WIDTH_DEFAULT)),
     [],
   )
   const setAsideWidth = useCallback(
-    (width: number) => setAsideWidthValue(clampWidth(width, ASIDE_WIDTH_MIN, ASIDE_WIDTH_MAX)),
+    (width: number) => setAsideWidthValue(normalizeWidth(width, ASIDE_WIDTH_DEFAULT)),
     [],
   )
 

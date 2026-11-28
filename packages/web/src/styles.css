@@ -168,9 +168,10 @@ html[data-theme='light'] {
     cursor: pointer;
   }
 
-  /* Dragging a column divider must resize in real time: freeze the width
-     transition while the pointer is captured. */
-  html[data-resizing] .sidebar-shell {
+  /* Sidebar width and content padding animate together so the fixed sidebar
+     never covers the article. Freeze both while dragging for instant feedback. */
+  html[data-resizing] .sidebar-shell,
+  html[data-resizing] .shell-main {
     transition: none;
   }
 
